@@ -13,15 +13,18 @@ Defining a function
 -------------------
 Functions are defined using the %as% notation. Any block can be in the 
 function definition
+
     fib(n) %as% { fib(n-1) + fib(n-2) }
 
 Adding guards
 -------------
 Guards are simply an additional clause in the function.
+
     fib(n) %when% { n >= 0 } %as% { fib(n-1) + fib(n-2) }
 
 As many guard statements can be added in the block as desired. Just separate
 them with either a new line or a semi colon.
+
     fib(n) %when% {
       is.integer(n)
       n >= 0
@@ -30,15 +33,18 @@ them with either a new line or a semi colon.
 Pattern Matching
 ----------------
 Simple pattern matching of literals is supported in lambda-r.
+
     fib(0) %as% 1
     fib(1) %as% 1
 
 Defining a type
 ---------------
 Define types by defining their constructor.
+
     Integer(x) %as% x
 
 Instantiating the type is as simple as calling the function.
+
     x <- Integer(5)
 
 Type declarations
@@ -46,11 +52,13 @@ Type declarations
 Type constraints can be added to a function. This ensures that the arguments
 have compatible types when the function is called. The final type is the
 return type.
+
     fib(n) %::% Integer : Integer
 
 One Shot
 ========
 Here's the complete example without types
+
     fib(0) %as% 1
     fib(1) %as% 1
     fib(n) %as% { fib(n-1) + fib(n-2) }
@@ -58,6 +66,7 @@ Here's the complete example without types
     fib(5)
 
 and with types
+
     Integer(x) %as% x
      
     fib(0) %as% 1
