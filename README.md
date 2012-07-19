@@ -80,6 +80,7 @@ and with types
 Future
 ======
 + Tests
++ Literals need to go before variables in definitions
 + Better warning messages
 + Handle arbitrary locations for type declarations
 + Allow arbitrary placement of type declarations
