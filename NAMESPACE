@@ -1,0 +1,4 @@
+export("%as%")
+export("%::%")
+export("UseFunction")
+export("NewObject")
