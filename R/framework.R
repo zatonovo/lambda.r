@@ -38,6 +38,7 @@ require(parser)
   tree$name <- get_name(it)
   tree$args <- get_args(it)
   guard_expr <- get_guard(it)
+  guard_expr <- transform_attrs(guard_expr)
   tree$guard <- guard_fn(tree$args, guard_expr)
   tree$def <- get_definition(tree$args, b.expr)
 
@@ -186,6 +187,49 @@ guard_fn <- function(raw.args, tree)
   fn.string <- sprintf(".fn <- function(%s) { %s }", arg.string, body)
   eval(parse(text=fn.string))
   .fn
+}
+
+# A parse transform to change object@attribute to attr(object,'attribute')
+# f(x) %when% { x@name == "bob" } %as% x
+transform_attrs <- function(tree)
+{
+  start <- grep("'@'", tree$token.desc, value=FALSE) - 1
+  stop <- grep("SLOT", tree$token.desc, value=FALSE)
+  if (length(start) < 1) return(tree)
+
+  template <- data.frame(line1=0,
+    token.desc=c('SYMBOL_FUNCTION_CALL',"'('",'SYMBOL',"','",'STR_CONST',"')'"),
+    text=c('attr','(', 'object', ',', '"key"',')'),
+    stringsAsFactors=FALSE)
+  rep.fn <- function(idx,o,k)
+  {
+    template$line1 <- idx
+    template$text[3] <- o
+    template$text[5] <- paste('"',k,'"', sep='')
+    template
+  }
+
+  positions <- data.frame(cbind(start,stop), stringsAsFactors=FALSE)
+  cut.fn <- function(idx)
+  {
+    ls <- NULL
+    if (idx == 1) inf <- 1
+    else inf <- positions$stop[idx - 1]
+    sup <- positions$start[idx] - 1
+    if (sup > 0) ls <- rbind(ls, tree[inf:sup,])
+
+    i <- tree[positions$start[idx],]$line1
+    o <- tree[positions$start[idx],]$text
+    k <- tree[positions$stop[idx],]$text
+    ls <- rbind(ls, rep.fn(i,o,k))
+
+    if (idx == nrow(positions)) {
+      ls <- rbind(ls, tree[(positions$stop[idx] + 1) : nrow(tree),] )
+    }
+    ls
+  }
+  lines <- apply(array(1:nrow(positions)),1,cut.fn)
+  do.call(rbind, lines)
 }
 
 is.type <- function(fn.string)
