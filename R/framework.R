@@ -232,12 +232,14 @@ get_types <- function(it, args, expr)
   types[,c('line1','token.desc','text')]
 }
 
-add_variant <- function(tree)
+# from.pattern - if TRUE then insert at the end of the patterns but before
+# variables. This way type declarations don't supersede patterns.
+add_variant <- function(tree, from.pattern=FALSE)
 {
   # We use 2 because this is called from within the 'guard' function so the
   # stack is two down
   where <- topenv(parent.frame(2))
-  .setup_parent(tree$name, where)
+  setup_parent(tree$name, where)
   fn <- get(tree$name, where)
   variants <- attr(fn,'variants')
 
@@ -276,7 +278,7 @@ get_variant <- function(fn, arg.length)
 }
 
 
-.setup_parent <- function(parent, where)
+setup_parent <- function(parent, where)
 {
   # Overwrite a final definition (as opposed to appending)
   if (exists(parent, where))
