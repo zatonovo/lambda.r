@@ -40,7 +40,10 @@ require(parser)
   guard_expr <- get_guard(it)
   guard_expr <- transform_attrs(guard_expr)
   tree$guard <- guard_fn(tree$args, guard_expr)
-  tree$def <- get_definition(tree$args, b.expr)
+
+  body_expr <- get_body(it)
+  body_expr <- transform_attrs(body_expr)
+  tree$def <- body_fn(tree$args, body_expr)
 
   add_variant(tree)
   invisible()
@@ -108,9 +111,10 @@ iterator <- function(tree)
 {
   cap <- nrow(tree) + 1
   idx <- 0
-  function()
+  function(rewind=FALSE)
   {
-    idx <<- idx + 1
+    if (rewind) idx <<- idx - 1
+    else idx <<- idx + 1
     if (idx < cap) tree[idx,]
     else NA
   }
@@ -158,15 +162,17 @@ get_guard <- function(it)
       if (line$token.desc %in% c('expr',"','")) next
       guards <- rbind(guards, line)
     }
-    while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
+    #while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
   }
+  else
+    it(rewind=TRUE)
   guards[,c('line1','token.desc','text')]
 }
 
 guard_fn <- function(raw.args, tree)
 {
   lines <- NULL
-  args <- apply(raw.args,1, arguer())
+  args <- apply(raw.args,1, arg.names())
   # Add any pattern matches
   mismatch <- args != raw.args$text
   if (any(mismatch))
@@ -214,7 +220,7 @@ transform_attrs <- function(tree)
   {
     ls <- NULL
     if (idx == 1) inf <- 1
-    else inf <- positions$stop[idx - 1]
+    else inf <- positions$stop[idx - 1] + 1
     sup <- positions$start[idx] - 1
     if (sup > 0) ls <- rbind(ls, tree[inf:sup,])
 
@@ -238,7 +244,7 @@ is.type <- function(fn.string)
 }
 
 # Get argument names
-arguer <- function()
+arg.names <- function()
 {
   idx <- 0
   function(x)
@@ -247,11 +253,66 @@ arguer <- function()
     else { idx <<- idx + 1; paste('.z',idx,sep='') }
   }
 }
+
+# Obsolete
 get_definition <- function(args, body)
 {
   # TODO: Check for side effects
-  args <- paste(apply(args,1, arguer()), collapse=',')
+  args <- paste(apply(args,1, arg.names()), collapse=',')
   fn.string <- paste(".fn <- function(",args,") ",body, collapse="")
+  eval(parse(text=fn.string))
+  .fn
+}
+
+get_body <- function(it)
+{
+  body <- NULL
+  while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
+  if (line$text == '%as%')
+  {
+    needs.wrapping <- FALSE
+    while (!is.na(line <- it()) && TRUE)
+    {
+      if (line$token.desc %in% c('expr')) next
+      body <- rbind(body, line)
+    }
+  }
+  else
+    it(rewind=TRUE)
+  body[,c('line1','token.desc','text')]
+}
+
+open_brace <- function()
+{
+  data.frame(line1=0,col1=0,byte1=0, line2=0,col2=1,byte2=1, token=123,id=13,
+    parent=30,top_level=0, token.desc="'{'", terminal=TRUE, text='{')
+}
+
+close_brace <- function()
+{
+  data.frame(line1=0,col1=0,byte1=0, line2=0,col2=1,byte2=1, token=125,id=15,
+    parent=30,top_level=0, token.desc="'}'", terminal=TRUE, text='}')
+}
+
+
+body_fn <- function(raw.args, tree)
+{
+  if (tree$token.desc[1] == "'{'") tree <- tree[2:(nrow(tree)-1), ]
+  lines <- NULL
+  args <- apply(raw.args,1, arg.names())
+
+  if (!is.null(tree))
+  {
+    f <- function(x) paste(tree[tree$line1 %in% x,]$text, collapse=' ')
+    index <- array(unique(tree$line1))
+    lines <- apply(index,1,f)
+  }
+
+  if (length(lines) < 1) return(NULL)
+
+  body <- paste(lines, collapse='\n')
+  arg.string <- paste(args, collapse=',')
+  fn.string <- sprintf(".fn <- function(%s) { %s }", arg.string, body)
   eval(parse(text=fn.string))
   .fn
 }
