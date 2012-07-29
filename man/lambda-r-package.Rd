@@ -42,18 +42,21 @@ Some background on using guards and pattern matching:
 }
 \keyword{ package }
 \seealso{
-\code{\link{UseFunction}}, \code{\link{NewObject}}, \code{\link{\%as\%}}
+\code{\link{UseFunction}}, \code{\link{\%as\%}}
 }
 \examples{
-DataObject(data, name=NA) \%as\% list(name=name, data=data)
+DataObject(data, name=NA) \%as\% {
+  data@name <- name
+  data
+}
 
 abs_max(a) \%::\% numeric : numeric
 abs_max(a) \%when\% { length(a) > 1 } \%as\% 
 {
   abs_max(a[1], abs_max(a[2:length(a)]))
-} \%must\% { result > 0 }
+}
 
-abs_max(a) \%when\% { length(a) == 1 } \%as\% a \%must\% { result == a }
+abs_max(a) \%when\% { length(a) == 1 } \%as\% a
 
 abs_max(a) \%::\% DataObject : numeric
 abs_max(a) \%when\% { a \%hasa\% data } \%as\%
@@ -67,18 +70,17 @@ abs_max(a) \%when\% is.numeric(b) \%must\%
   result >= a | result >= b
 } \%as\% max(abs(a), abs(b))
 
-# Test some output
-abs_max(2,-3) # Calls abs_max.twoArg
+abs_max(2,-3)
 
-abs_max("3","-4") # Calls abs_max.twoArgDefault
+abs_max("3","-4")
 
-abs_max(3,"-4") # Calls abs_max.twoArgDefault
+abs_max(3,"-4")
 
 a <- rnorm(10)
-abs_max(a) # Calls abs_max.recursive1
+abs_max(a)
 
-b <- create(DataObject, c('12,-3,-5,8,-13,3,1,3'))
-abs_max(b) # Calls abs_max.csv
+b <- DataObject(c('12,-3,-5,8,-13,3,1,3'))
+abs_max(b)
 
 
 ## Newton-Raphson optimization
@@ -96,22 +98,23 @@ minimize <- function(x0, algo, max.steps=100)
   new.x
 }
 
-iterate \%when\% (algo \%isa\% NewtonRaphson)
-iterate \%as\% function(x, algo) x - algo$f1(x) / algo$f2(x)
+iterate(x, algo) %::% numeric : NewtonRaphson : numeric
+iterate(x, algo) \%as\% { x - algo$f1(x) / algo$f2(x) }
 
-iterate \%when\% (algo \%isa\% GradientDescent)
-iterate \%as\% function(x, algo) x - algo$step * algo$f1(x)
+iterate(x, algo) \%::\% numeric : GradientDescent : numeric
+iterate(x, algo) \%as\% { x - algo$step * algo$f1(x) }
 
-create.GradientDescent <- function(T, f1, step=0.01) list(f1=f1,step=step)
+NewtonRaphson(f1, f2) list(f1=f1, f2=f2)
+GradientDescent(f1, step=0.01) list(f1=f1, step=step)
 
 
 fx <- function(x) x^2 - 4
 f1 <- function(x) 2*x
 f2 <- function(x) 2
 
-algo <- create(NewtonRaphson, f1=f1,f2=f2)
+algo <- NewtonRaphson(f1,f2)
 minimize(3, algo)
 
-algo <- create(GradientDescent, f1=f1,step=0.1)
+algo <- GradientDescent(f1, step=0.1)
 minimize(3, algo)
 }
