@@ -1,4 +1,4 @@
-Package: lambda-r
+Package: lambda.r
 Type: Package
 Title: Functional programming in R
 Version: {version}
