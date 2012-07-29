@@ -6,6 +6,8 @@ Prices(series) %as%
 }
 
 ps <- Prices(rnorm(50))
+expect_that(attr(ps,'asset.class') == 'equity', is_true())
+expect_that(attr(ps,'periodicity') == 'daily', is_true())
 
 returns(x) %when% {
   x@asset.class == "equity"
@@ -14,7 +16,7 @@ returns(x) %when% {
   x[2:length(x)] / x[1:(length(x) - 1)] - 1
 }
 
-returns(ps)
+expect_that(length(returns(ps)) == length(ps) - 1, is_true())
 
 ##############################################################################
 Temperature(x, system, units) %as%
@@ -32,6 +34,9 @@ freezing(x) %when% {
   else { FALSE }
 }
 
-temp <- Temperature(20, 'metric', 'celsius')
-freezing(temp)
+temp <- Temperature(20)
+expect_that(attr(temp,'system') == 'metric', is_true())
+expect_that(attr(temp,'units') == 'celsius', is_true())
+
+expect_that(freezing(temp), is_false())
 

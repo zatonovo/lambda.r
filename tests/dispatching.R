@@ -1,16 +1,26 @@
-# Pattern matching
-# Simple dispatching
-a1(0,1) %as%
-{
+cat("Test 1\n")
+is.wholenumber <-
+  function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
 
+fib(0) %as% 1
+fib(1) %as% 1
+fib(n) %when% {
+  is.wholenumber(n)
+} %as% {
+  fib(n-1) + fib(n-2)
 }
+seal(fib)
 
-a1(x,0) %as%
-{
-}
+expect_that(fib(5), equals(8))
 
-a1(x,'green') %as% { 5 }
+cat("Test 2\n")
+Integer(x) %as% x
 
-a1(x,y) %as% { x + y }
+fib.a(n) %::% Integer : Integer
+fib.a(0) %as% Integer(1)
+fib.a(1) %as% Integer(1)
+fib.a(n) %as% { Integer(fib(n-1) + fib(n-2)) }
+seal(fib.a)
 
-# Guards
+expect_that(fib.a(Integer(5)), equals(Integer(8)))
+expect_that(fib.a(5), throws_error())

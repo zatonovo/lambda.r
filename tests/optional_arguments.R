@@ -5,12 +5,6 @@ Prices(series, asset.class='equity', periodicity='daily') %as%
   series
 }
 
-
-ps <- Prices(rnorm(50))                        # OK
-ps <- Prices(rnorm(50), 'fx')                  # OK
-ps <- Prices(rnorm(50), periodicity='monthly') # OK
-ps <- Prices(periodicity='monthly', series=rnorm(50)) # OK
-
 returns(x) %when% {
   x@asset.class == "equity"
   x@periodicity == "daily"
@@ -18,7 +12,36 @@ returns(x) %when% {
   x[2:length(x)] / x[1:(length(x) - 1)] - 1
 }
 
-returns(ps)
+seal(Prices)
+seal(returns)
+
+cat("Test 1\n")
+ps <- Prices(abs(rnorm(50)))
+expect_that(attr(ps,'asset.class'), equals('equity'))
+expect_that(attr(ps,'periodicity'), equals('daily'))
+
+cat("Test 2\n")
+ps <- Prices(abs(rnorm(50)), 'fx')
+expect_that(attr(ps,'asset.class'), equals('fx'))
+expect_that(attr(ps,'periodicity'), equals('daily'))
+
+cat("Test 3\n")
+ps <- Prices(abs(rnorm(50)), periodicity='monthly')
+expect_that(attr(ps,'asset.class'), equals('equity'))
+expect_that(attr(ps,'periodicity'), equals('monthly'))
+
+cat("Test 4\n")
+ps <- Prices(periodicity='monthly', series=abs(rnorm(50)))
+expect_that(attr(ps,'asset.class'), equals('equity'))
+expect_that(attr(ps,'periodicity'), equals('monthly'))
+
+
+cat("Test 5\n")
+expect_that(returns(ps), throws_error())
+
+cat("Test 6\n")
+ps <- Prices(abs(rnorm(50)))
+expect_that(length(returns(ps)), equals(length(ps) - 1))
 
 ##############################################################################
 Temperature(x, system="metric", units='celsius') %as%
@@ -28,6 +51,7 @@ Temperature(x, system="metric", units='celsius') %as%
   x
 }
 
+freezing(x) %::% Temperature : logical
 freezing(x) %when% {
   x@system == 'metric'
   x@units == 'celsius'
@@ -44,11 +68,16 @@ freezing(x) %when% {
   else { FALSE }
 }
 
-ctemp <- Temperature(20)
-freezing(ctemp)
+seal(Temperature)
+seal(freezing)
 
+cat("Test 7\n")
+ctemp <- Temperature(20)
+expect_that(freezing(ctemp), is_false())
+
+cat("Test 8\n")
 ktemp <- Temperature(20, units='kelvin')
-freezing(ktemp)
+expect_that(freezing(ktemp), is_true())
 
 
 

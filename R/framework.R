@@ -11,18 +11,20 @@ require(parser)
   raw <- attr(expr,"data")
 
   it <- iterator(raw)
-  name <- get_name(it)
   tree <- list()
-  tree$args <- get_args(it)
-  tree$types <- get_types(it, tree$args, t.expr)
+  args_expr <- parse_fun(it)
+  name <- args_expr$token[1]
+  tree$args <- args_expr[2:nrow(args_expr),]
+  tree$types <- parse_types(it, tree$args, t.expr)
+  tree$signature <- paste(s.expr,"%::%",t.expr, sep=' ')
 
-  add_variant(name, tree)
+  add_type(name, tree)
   invisible()
 }
 
 
 # f(a,0) %when% { a < 5; a > 0 } %as% { z <- a + 2; z * 2 }
-# f(a,b) %when% { a < 5 } %as% { a + b }
+# f(a,b) %when% { a < 0 } %as% { abs(a) + b }
 # f(a,b) %as% { a + b }
 '%as%' <- function(signature, body)
 {
@@ -32,34 +34,36 @@ require(parser)
   #cat("Full expression:",text,"\n")
   expr <- parser(text=text)
   raw <- attr(expr,"data")
-
   it <- iterator(raw)
-  name <- get_name(it)
+
   tree <- list()
-  args_expr <- get_args(it)
-  tree$args <- remove_defaults(args_expr)
-  guard_expr <- get_guard(it)
+  args_expr <- parse_fun(it)
+  name <- args_expr$token[1]
+  tree$args <- args_expr[2:nrow(args_expr),]
+  guard_expr <- parse_guard(it)
   guard_expr <- transform_attrs(guard_expr)
   tree$guard <- guard_fn(tree$args, guard_expr)
 
-  body_expr <- get_body(it)
+  body_expr <- parse_body(it)
   body_expr <- transform_attrs(body_expr)
   tree$def <- body_fn(tree$args, body_expr)
+  tree$signature <- s.expr
+  tree$body <- b.expr
 
   add_variant(name, tree)
-  create_defaults(tree, args_expr)
   invisible()
 }
 
 ################################## RUN TIME ###################################
-.ERR_NO_MATCH <- "No match for function %s/%s: %s"
-.ERR_USE_FUNCTION <- "No valid function for '%s/%s: %s'"
+.ERR_NO_MATCH <- "No match for function"
+.ERR_USE_FUNCTION <- "No valid function for"
 .ERR_ENSURE_FAILED <- "Assertion '%s' failed for args = %s and result = %s"
 NewObject <- function(type.name, ...)
 {
   result <- UseFunction(type.name, ...)
   type <- gsub('"','', type.name)
-  class(result) <- c(type, class(result))
+  if (!type %in% class(result))
+    class(result) <- c(type, class(result))
   result
 }
 
@@ -72,23 +76,32 @@ UseFunction <- function(fn.name, ...)
   raw.args <- list(...)
   vs <- get_variant(fn,length(raw.args))
   if (is.null(vs) || length(vs) < 1)
-    stop(sprintf(.ERR_NO_MATCH,fn.name,length(raw.args),as_simple(raw.args)))
+    stop(use_error(.ERR_NO_MATCH,fn.name,raw.args))
   matched.fn <- NULL
   for (v in vs)
   {
     full.args <- fill_args(raw.args, v)
-    # TODO: Update type structure (allow only one type declaration per unique
-    # count of arguments)
-    if (!check_types(v$types, full.args)) next
+    full.type <- get_type(fn,v$type.index)
+    if (!check_types(full.type, full.args)) next
     if (is.null(v$guard)) { matched.fn <- v$def; break }
     if (do.call(v$guard, full.args)) { matched.fn <- v$def; break }
   }
   if (is.null(matched.fn))
-    stop(sprintf(.ERR_USE_FUNCTION,fn.name,length(raw.args),as_simple(raw.args)))
+    stop(use_error(.ERR_USE_FUNCTION,fn.name,raw.args))
 
+  if (attr(fn,'debug')) debug(matched.fn)
   result <- do.call(matched.fn, full.args)
 
-  # TODO: Add assertions
+  if (!is.null(full.type))
+  {
+    if (!full.type$types$text[length(raw.args)+1] %in% class(result))
+    {
+      exp <- full.type$types$text[length(raw.args)+1]
+      act <- paste(class(result), collapse=', ')
+      msg <- sprintf("Expected '%s' as return type but found '%s' for",exp,act)
+      stop(use_error(msg,fn.name,raw.args))
+    }
+  }
 
   result
 }
@@ -104,20 +117,22 @@ fill_args <- function(raw.args, tree)
     c(raw.args, default[(length(raw.args)+1):length(default)] )
   else
   {
-    names(default) <- tree$args$text
-    shim <- tree$args$text[1:length(raw.args)]
+    names(default) <- tree$args$token
+    shim <- tree$args$token[1:length(raw.args)]
     names(raw.args)[names(raw.args) == ""] <- shim[names(raw.args) == '']
     default[names(raw.args)] <- raw.args
     default
   }
 }
 
+# Validate arguments against types
 check_types <- function(raw.types, raw.args)
 {
   if (is.null(raw.types)) return(TRUE)
-  if (nrow(raw.types) - 1 != length(raw.args)) return(FALSE)
+  types <- raw.types$types
+  if (nrow(types) - 1 != length(raw.args)) return(FALSE)
   arg.types <- sapply(raw.args, function(x) class(x))
-  all(raw.types$text[1:length(raw.args)] %in% arg.types)
+  all(types$text[1:length(raw.args)] %in% arg.types)
 }
 
 .SIMPLE_TYPES <- c('numeric','character','POSIXt','POSIXct')
@@ -128,6 +143,13 @@ as_simple <- function(x)
   if (length(x) == 1) return(x)
   if (length(x) < 5) sprintf("c(%s)", paste(x, collapse=','))
   else sprintf("c(%s, ...)", paste(x[1:4], collapse=','))
+}
+
+use_error <- function(msg, fn.name, raw.args)
+{
+  args <- paste(sapply(raw.args, as_simple), collapse=',')
+  signature <- sprintf("'%s(%s)'", fn.name, args)
+  sprintf("%s %s", msg, signature)
 }
 
 ################################# PARSE TIME #################################
@@ -152,62 +174,111 @@ get_name <- function(it)
   line$text
 }
 
-get_args <- function(it)
+# Count level of parentheses
+# Count argument position (with commas and parenthesis level)
+# Argument name when paren.level == 1
+# End def when paren.level == 0
+# Next argument when comma and paren.level == 1
+# Default value when equal and paren.level == 1
+# Otherwise fill default value
+# paren.level,node,token,pattern,default
+# 0,function.name,fib,NA,NA
+# 1,argument,.lambda1,0,NA
+#
+# parse_fun(raw=parser(text="fib(0,y=some.fun(1)) %as% 1"))
+# parse_fun(raw=parser(text="fib(x,y=some.fun(1), 'bgfs') %as% 1"))
+parse_fun <- function(it, raw=NULL)
 {
-  args <- data.frame(stringsAsFactors=FALSE)
-  line <- it()
-  if (line$token.desc != "'('")
-    stop("Function missing opening parenthesis")
-
-  # Get arguments (position, name)
-  defaults <- NULL
-  default <- NULL
-  fn <- function(v, vs)
+  if (!is.null(raw))
   {
-    if (is.null(v)) v <- NA
-    else if (length(v) == 1 && v %in% c(",", ")") )
-      v <- NULL
-    else if (v[length(v)] %in% c(",", ")") )
-      v <- v[1:(length(v)-1)]
-
-    if (!is.null(v) && is.na(v))
-      vs <- c(vs, v)
-    else if (!is.null(v))
-      vs <- c(vs, paste(v,collapse=' '))
-    vs
+    if (!is.null(attr(raw,'data'))) raw <- attr(raw,'data')
+    it <- iterator(raw)
   }
+  name <- get_name(it)
+  paren.level <- 0
+  node <- 'function.name'
+  out <- data.frame(paren.level=paren.level, node=node, token=name,
+    pattern=NA, default=NA, stringsAsFactors=FALSE)
 
+  arg.idx <- 1
+  node <- 'argument'
+  token <- pattern <- default <- NULL
+  in.default <- FALSE
   while (!is.na(line <- it()) && line$token.desc != "SPECIAL")
   {
-    #if (line$token.desc %in% c('SYMBOL_FUNCTION_CALL',"'('"))
-    #  stop("Invalid symbol '",line$text,"'in function definition")
-    if (line$token.desc %in% c('expr','EQ_SUB')) next
-    if (line$token.desc %in% c('SYMBOL','SYMBOL_SUB'))
+    line.token <- line$token.desc
+    if (line.token == 'expr') next
+    if (line.token == "'('") 
     {
-      defaults <- fn(default,defaults)
-      default <- NULL
-      args <- rbind(args, line)
+      paren.level <- paren.level + 1
+      if (paren.level == 1) next
     }
-    else
+    if (line.token == "')'")
     {
-      if (line$token.desc == 'STR_CONST')
-        line$text <- sub('^[\'"]([^\'"]+)[\'"]$', '\\1', line$text)
+      paren.level <- paren.level - 1
+      if (paren.level < 1) 
+      {
+        if (is.null(token)) token <- paste('.lambda',arg.idx,sep='_')
+        if (is.null(pattern)) pattern <- NA
+        else pattern <- strip_quotes(paste(pattern, collapse=' '))
+        if (is.null(default)) default <- NA
+        else default <- strip_quotes(paste(default, collapse=' '))
+        out <- rbind(out, c(1,node,token,pattern,default))
+        break
+      }
+    }
+
+    #cat("paren.level:",paren.level,"\n")
+    if (paren.level == 1) 
+    {
+      if (line.token %in% c('SYMBOL','SYMBOL_SUB'))
+      {
+        #cat("Setting argument\n")
+        token <- line$text
+        next
+      }
+      if (line.token == 'EQ_SUB')
+      {
+        #cat("Starting default\n")
+        in.default <- TRUE
+        next
+      }
+      # Close current node
+      if (line.token == "','")
+      {
+        #cat("Closing node\n")
+        if (is.null(token)) token <- paste('.lambda',arg.idx,sep='_')
+        if (is.null(pattern)) pattern <- NA
+        else pattern <- strip_quotes(paste(pattern, collapse=' '))
+        if (is.null(default)) default <- NA
+        else default <- strip_quotes(paste(default, collapse=' '))
+
+        out <- rbind(out, c(paren.level,node,token,pattern,default))
+        token <- pattern <- default <- NULL
+        node <- 'argument'
+        arg.idx <- arg.idx + 1
+        in.default <- FALSE
+        next
+      }
+
+      if (in.default)
+        default <- c(default, line$text)
+      else
+        pattern <- c(pattern, line$text)
+    }
+    else 
+    {
       default <- c(default, line$text)
+      cat("Default is now",default,"\n")
     }
   }
-  if (length(default) > 1)
-  {
-    if (default[length(default)] %in% c(",", ")") )
-      default <- default[1:(length(default)-1)]
-    defaults <- c(defaults, default)
-  }
-  it(rewind=TRUE)
-  out <- args[,c('line1','token.desc','text')]
-  out$default=defaults
   out
 }
 
-get_guard <- function(it)
+strip_quotes <- function(x) sub('^[\'"]([^\'"]+)[\'"]$', '\\1', x)
+
+
+parse_guard <- function(it)
 {
   guards <- NULL
   while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
@@ -233,11 +304,13 @@ get_guard <- function(it)
 guard_fn <- function(raw.args, tree)
 {
   lines <- NULL
-  args <- apply(raw.args,1, arg.names())
+  args <- raw.args$token
   # Add any pattern matches
-  mismatch <- args != raw.args$text
-  if (any(mismatch))
-    lines <- paste(args[mismatch],'==',raw.args[mismatch,'text'], sep=' ')
+  if (any(!is.na(raw.args$pattern)))
+  {
+    patterns <- raw.args[!is.na(raw.args$pattern),]
+    lines <- paste(patterns$token,'==',patterns$pattern, sep=' ')
+  }
 
   # Add explicit guards
   if (!is.null(tree))
@@ -304,28 +377,8 @@ is.type <- function(fn.string)
   length(grep('^[A-Z]', fn.string)) > 0
 }
 
-# Get argument names
-arg.names <- function()
-{
-  idx <- 0
-  function(x)
-  {
-    if (x['token.desc'] == 'SYMBOL') x['text']
-    else { idx <<- idx + 1; paste('.z',idx,sep='') }
-  }
-}
 
-# Obsolete
-get_definition <- function(args, body)
-{
-  # TODO: Check for side effects
-  args <- paste(apply(args,1, arg.names()), collapse=',')
-  fn.string <- paste(".fn <- function(",args,") ",body, collapse="")
-  eval(parse(text=fn.string))
-  .fn
-}
-
-get_body <- function(it)
+parse_body <- function(it)
 {
   body <- NULL
   while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
@@ -343,24 +396,12 @@ get_body <- function(it)
   body[,c('line1','token.desc','text')]
 }
 
-open_brace <- function()
-{
-  data.frame(line1=0,col1=0,byte1=0, line2=0,col2=1,byte2=1, token=123,id=13,
-    parent=30,top_level=0, token.desc="'{'", terminal=TRUE, text='{')
-}
-
-close_brace <- function()
-{
-  data.frame(line1=0,col1=0,byte1=0, line2=0,col2=1,byte2=1, token=125,id=15,
-    parent=30,top_level=0, token.desc="'}'", terminal=TRUE, text='}')
-}
-
 
 body_fn <- function(raw.args, tree)
 {
   if (tree$token.desc[1] == "'{'") tree <- tree[2:(nrow(tree)-1), ]
   lines <- NULL
-  args <- apply(raw.args,1, arg.names())
+  args <- raw.args$token
 
   if (!is.null(tree))
   {
@@ -378,7 +419,7 @@ body_fn <- function(raw.args, tree)
   .fn
 }
 
-get_types <- function(it, args, expr)
+parse_types <- function(it, args, expr)
 {
   types <- NULL
   while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
@@ -398,11 +439,7 @@ get_types <- function(it, args, expr)
   types[,c('line1','token.desc','text')]
 }
 
-# from.pattern - if TRUE then insert at the end of the patterns but before
-# variables. This way type declarations don't supersede patterns.
-# variants[[idx]] -> list(num.args=c(), args=data.frame(),
-#   guard=character(), def=character())
-add_variant <- function(fn.name, tree, from.pattern=FALSE)
+add_variant <- function(fn.name, tree)
 {
   # We use 2 because this is called from within the 'guard' function so the
   # stack is two down
@@ -413,10 +450,16 @@ add_variant <- function(fn.name, tree, from.pattern=FALSE)
 
   args <- tree$args
   tree$accepts <- length(args$default[is.na(args$default)]) : nrow(args)
+  type.index <- get_type_index(fn, nrow(args))
+  if (!is.null(type.index) && length(type.index) > 0)
+    tree$type.index <- type.index
   # TODO: Support ellipsis as Inf
-  if (from.pattern)
-    variants <- c(list(tree), variants)
-  else
+  #if (!is.null(vidx <- signature_idx(tree, variants)))
+  #{
+  #  cat("NOTE: Replaced existing function variant at",vidx,"\n")
+  #  variants[[vidx]] <- tree
+  #}
+  #else
     variants[[length(variants) + 1]] <- tree
   attr(fn,'variants') <- variants
 
@@ -433,6 +476,48 @@ get_variant <- function(fn, arg.length)
   raw[matches]
 }
 
+# Type definitions are always additive
+add_type <- function(fn.name, tree)
+{
+  # We use 2 because this is called from within the 'guard' function so the
+  # stack is two down
+  where <- topenv(parent.frame(2))
+  setup_parent(fn.name, where)
+  fn <- get(fn.name, where)
+  types <- attr(fn,'types')
+
+  args <- tree$args
+  tree$accepts <- length(args$default[is.na(args$default)]) : nrow(args)
+  # TODO: Support ellipsis as Inf
+  types[[length(types) + 1]] <- tree
+  attr(fn,'types') <- types
+
+  assign(fn.name, fn, where)
+  invisible()
+}
+
+# Type declarations are scoped based on when they are created. They continue
+# until a new type declaration is added.
+get_type <- function(fn, idx)
+{
+  if (is.null(idx)) return(NULL)
+  raw <- attr(fn,'types')
+  if (length(raw) < 1) return(NULL)
+  match <- raw[[idx]]
+}
+
+# Get the index for the most recent type declaration for the given arg.length
+get_type_index <- function(fn, arg.length)
+{
+  raw <- attr(fn,'types')
+  if (length(raw) < 1) return(NULL)
+  
+  match.fn <- function(x)
+    any(arg.length >= raw[[x]]$accepts & arg.length <= raw[[x]]$accepts)
+  matches <- data.frame(idx=(1:length(raw)), v=sapply(1:length(raw), match.fn))
+  if (!all(matches$v)) return(NULL)
+  max(matches$idx[matches$v==TRUE])
+}
 
 setup_parent <- function(parent, where)
 {
@@ -440,59 +525,69 @@ setup_parent <- function(parent, where)
   if (exists(parent, where))
   {
     parent.def <- get(parent, where)
-    is.final <- attr(parent.def, 'final')
-    if (!is.null(is.final) && is.final == TRUE)
+    is.final <- attr(parent.def, 'sealed')
+    if ((!is.null(is.final) && is.final == TRUE) ||
+        (! any(c('lambdar.fun','lambdar.type') %in% class(parent.def))) )
     {
-      attributes(fn) <- NULL
-      attr(parent.def, 'variants') <- list()
+      parent.def <- init_function(parent)
       assign(parent, parent.def, where)
     }
   }
   else
   {
-    if (is.type(parent)) 
-      pattern <- 'function(...) NewObject(\'%s\',...)'
-    else
-      pattern <- 'function(...) UseFunction(\'%s\',...)'
-    parent.def <- eval(parse(text=sprintf(pattern,parent)))
-    attr(parent.def, 'variants') <- list()
-    #cat("Adding parent function",parent.def,"to",where,"\n")
+    parent.def <- init_function(parent)
     assign(parent, parent.def, where)
-    #msg <- "Function %s has no visible parent function '%s'"
-    #stop(sprintf(msg, child, parent))
   }
 }
 
-# Remove default values from parse tree
-remove_defaults <- function(args_expr)
+init_function <- function(name)
 {
-  args <- args_expr[args_expr$token.desc %in% c('SYMBOL','SYMBOL_SUB'), ]
-  args$token.desc <- 'SYMBOL'
-  args
+  if (is.type(name)) 
+    pattern <- 'function(...) NewObject(\'%s\',...)'
+  else
+    pattern <- 'function(...) UseFunction(\'%s\',...)'
+  fn <- eval(parse(text=sprintf(pattern,name)))
+  if (is.type(name))
+    attr(fn, 'class') <- c('lambdar.type',attr(fn,'class'))
+  else
+    attr(fn, 'class') <- c('lambdar.fun',attr(fn,'class'))
+  attr(fn, 'variants') <- list()
+  attr(fn, 'types') <- list()
+  attr(fn, 'debug') <- FALSE
+  fn
 }
 
-# Create new functions that use default values
-create_defaults <- function(tree, args_expr)
+
+# Check if the same signature already exists in the function. If so return the
+# index of the existing definition
+# Types do not require default values specified in the signature, so we don't
+# check for that
+# With guards, there could be multiple matches, so each match will get a type
+# added
+# For adding types, we want to match all applicable
+# INCOMPLETE - Requires examining guards as well
+signature_idx <- function(tree, variants)
 {
-  num.symbols <- length(args_expr$token.desc[args_expr$token.desc == 'SYMBOL'])
-  options <- NULL
-  it = iterator(args_expr)
-  key <- NULL
-  default <- NULL
-  while (!is.na(line <- it()) && TRUE)
+  if (length(variants) < 1) return(NULL)
+  args <- tree$args
+  fn <- function(idx)
   {
-    if (line$token.desc %in% c('SYMBOL','EQ_SUB')) next
-    if (line$token.desc == 'SYMBOL_SUB')
-    {
-      if (!is.null(key) && !is.null(default))
-        options <- rbind(options, c(key, paste(default,collapse='')))
-      key <- line$text
-      default <- NULL
-    }
-    else
-      default <- c(default, line$text)
+    vargs <- variants[[idx]]$args
+    if (nrow(args) != nrow(vargs)) return(NULL)
+    if (length(args$pattern[is.na(args$pattern)]) !=
+        length(vargs$pattern[is.na(vargs$pattern)]) ) return(NULL)
+    if (!all(args$token == vargs$token))
+      stop("Mismatched argument names found")
+    idx
   }
-  options <- rbind(options, c(key, paste(default,collapse='')))
-  options <- data.frame(options, stringsAsFactors=FALSE)
-  options
+  temp <- sapply(array(1:length(variants)), fn)
+  do.call(c, temp)
+}
+
+seal <- function(fn)
+{
+  fn.name <- deparse(substitute(fn))
+  attr(fn,'sealed') <- TRUE
+  assign(fn.name, fn, inherits=TRUE)
+  invisible()
 }
