@@ -466,7 +466,7 @@ get_variant <- function(fn, arg.length)
 {
   raw <- attr(fn,'variants')
   match.fn <- function(x)
-    any(arg.length >= x$accepts & arg.length <= x$accepts)
+    arg.length >= min(x$accepts) & arg.length <= max(x$accepts)
   matches <- sapply(raw, match.fn)
   raw[matches]
 }
