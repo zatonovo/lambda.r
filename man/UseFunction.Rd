@@ -6,11 +6,12 @@
 lambda r. This is used internally by lambda r.}
 \usage{
 UseFunction(fn.name, ...)
-NewObject(fn.name, ...)
+NewObject(type.name, ...)
 }
 \arguments{
   \item{fn.name}{The name of a function that uses functional dispatching. This
     is just the name of the function being defined}
+  \item{type.name}{The name of the type}
   \item{\dots}{The arguments that are passed to dispatched functions }
 }
 \details{
@@ -23,7 +24,7 @@ NewObject(fn.name, ...)
 \author{ Brian Lee Yung Rowe }
 
 \seealso{
-\code{\link{AbuseMethod}}
+\code{\link{\%as\%}}
 }
 \examples{
 # Note that these are trivial examples for pedagogical purposes. Due to their

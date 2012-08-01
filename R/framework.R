@@ -132,7 +132,7 @@ check_types <- function(raw.types, raw.args)
   types <- raw.types$types
   if (nrow(types) - 1 != length(raw.args)) return(FALSE)
   arg.types <- sapply(raw.args, function(x) class(x))
-  all(types$text[1:length(raw.args)] %in% arg.types)
+  all(sapply(1:length(raw.args), function(x) types$text[x] %in% arg.types[[x]]))
 }
 
 .SIMPLE_TYPES <- c('numeric','character','POSIXt','POSIXct')
@@ -324,9 +324,8 @@ guard_fn <- function(raw.args, tree)
 
   body <- paste(lines, collapse=' & ')
   arg.string <- paste(args, collapse=',')
-  fn.string <- sprintf(".fn <- function(%s) { %s }", arg.string, body)
+  fn.string <- sprintf("function(%s) { %s }", arg.string, body)
   eval(parse(text=fn.string))
-  .fn
 }
 
 # A parse transform to change object@attribute to attr(object,'attribute')
@@ -414,9 +413,8 @@ body_fn <- function(raw.args, tree)
 
   body <- paste(lines, collapse='\n')
   arg.string <- paste(args, collapse=',')
-  fn.string <- sprintf(".fn <- function(%s) { %s }", arg.string, body)
+  fn.string <- sprintf("function(%s) { %s }", arg.string, body)
   eval(parse(text=fn.string))
-  .fn
 }
 
 parse_types <- function(it, args, expr)
