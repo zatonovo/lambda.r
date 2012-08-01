@@ -447,18 +447,15 @@ add_variant <- function(fn.name, tree)
   variants <- attr(fn,'variants')
 
   args <- tree$args
-  tree$accepts <- length(args$default[is.na(args$default)]) : nrow(args)
+  required.args <- length(args$default[is.na(args$default)])
+  if ('...' %in% tree$args$token)
+    tree$accepts <- c(required.args : nrow(args) - 1, Inf)
+  else
+    tree$accepts <- required.args : nrow(args)
   type.index <- get_type_index(fn, nrow(args))
   if (!is.null(type.index) && length(type.index) > 0)
     tree$type.index <- type.index
-  # TODO: Support ellipsis as Inf
-  #if (!is.null(vidx <- signature_idx(tree, variants)))
-  #{
-  #  cat("NOTE: Replaced existing function variant at",vidx,"\n")
-  #  variants[[vidx]] <- tree
-  #}
-  #else
-    variants[[length(variants) + 1]] <- tree
+  variants[[length(variants) + 1]] <- tree
   attr(fn,'variants') <- variants
 
   assign(fn.name, fn, where)
