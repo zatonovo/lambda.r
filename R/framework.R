@@ -84,7 +84,8 @@ UseFunction <- function(fn.name, ...)
     full.type <- get_type(fn,v$type.index)
     if (!check_types(full.type, full.args)) next
     if (is.null(v$guard)) { matched.fn <- v$def; break }
-    if (do.call(v$guard, full.args)) { matched.fn <- v$def; break }
+    gout <- do.call(v$guard, full.args)
+    if (length(gout) > 0 && gout) { matched.fn <- v$def; break }
   }
   if (is.null(matched.fn))
     stop(use_error(.ERR_USE_FUNCTION,fn.name,raw.args))
@@ -106,15 +107,17 @@ UseFunction <- function(fn.name, ...)
   result
 }
 
-# TODO: Add support for ellipsis arguments
 fill_args <- function(raw.args, tree)
 {
+  tree$args <- tree$args[tree$args$token != '...',]
   default <- tree$args$default
-  if (length(raw.args) == length(default)) return(raw.args)
 
   # This is for unnamed arguments
   if (is.null(names(raw.args)))
+  {
+    if (length(raw.args) == length(default)) return(raw.args)
     c(raw.args, default[(length(raw.args)+1):length(default)] )
+  }
   else
   {
     names(default) <- tree$args$token

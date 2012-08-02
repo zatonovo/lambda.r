@@ -30,6 +30,9 @@ them with either a new line or a semi colon.
       n >= 0
     } %as% { fib(n-1) + fib(n-2) }
 
+Note that the type check can be handled using a type declaration, which is a
+cleaner approach.
+
 Pattern Matching
 ----------------
 Simple pattern matching of literals is supported in lambda-r.
@@ -37,6 +40,7 @@ Simple pattern matching of literals is supported in lambda-r.
     fib(0) %as% 1
     fib(1) %as% 1
 
+Strings can also be pattern matched.
 
 Types
 =====
@@ -68,10 +72,19 @@ to the function implementation. A single type declaration will retain scope
 until another type declaration with the same number of parameters is declared
 (see tests/types.R for an example).
 
+Legacy types
+------------
+There are plenty of built-in types that supported just like custom types defined
+in lambda r. Use the same syntax for these types. In the example above we can
+just as easily declare
+
+    fib(n) %::% numeric : numeric
+
 One Shot
 ========
-Here's the complete example without types
+Here's the complete example with built-in types
 
+    fib(n) %::% numeric : numeric
     fib(0) %as% 1
     fib(1) %as% 1
     fib(n) %as% { fib(n-1) + fib(n-2) }
@@ -79,7 +92,7 @@ Here's the complete example without types
     fib(5)
     seal(fib)
 
-and with types
+and with custom types
 
     Integer(x) %as% x
      
@@ -91,8 +104,13 @@ and with types
     x <- Integer(5)
     fib(x)
 
-Advanced Features
-=================
+To ignore types altogether, just omit the type declaration.
+
+Sugar Coating
+=============
+All the great features of R function calls are supported in lambda r. In 
+addition, lambda r provides some parse transforms to add some extra features
+to make application development even easier.
 
 Object Attributes
 -----------------
@@ -146,6 +164,33 @@ defined, and this holds true with functions with optional arguments.
     [1] "celsius"
     attr(,"class")
     [1] "Temperature" "numeric"
+
+The Ellipsis Argument
+---------------------
+Support for the ellipsis argument is built into lambda r. Required arguments 
+must still be matched, while any additional arguments will be enclosed in the 
+ellipsis. Here's an example using the plant data included in R's lm help page.
+
+    regress(formula, ..., na.action='na.fail') %as% {
+      lm(formula, ..., na.action=na.action)
+    }
+
+    ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
+    trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
+    data <- data.frame(group=gl(2,10,20,labels=c("Ctl","Trt")), weight=c(ctl, trt))
+    lm.D9 <- regress(weight ~ group, data=data)
+
+Care does need to be used with the ellipsis as it behaves as a greedy match,
+so subsequent definitions may not work as you intend when using the ellipsis
+argument in a function variant.
+
+Named Arguments
+---------------
+The examples above all hint at supporting named arguments. Named arguments can
+be mixed and matched with positional arguments just as in legacy function
+definitions.
+
+    lm.D9 <- regress(data=data, weight ~ group)
 
 Sealing Definitions
 -------------------
@@ -201,12 +246,22 @@ The standard debug function will not work with lambda r functions. Instead, use
 the included functions debug.lr and undebug.lr. These functions will allow you
 to debug through a complete multipart function call.
 
+Known Limitations
+=================
+If you try to break lambda r, you will most likely succeed. There are things 
+that won't work, but most use cases should work fine. Do let me know if you 
+find something that fails, but don't break it just to break it. Below are
+some things that won't work.
+
+1. Complex mix and match of named and positional arguments
+
+    lm.D9 <- regress(data=data, formula=weight ~ group, NULL)
+
+Don't do this, please. It's bad style.
 
 Future
 ======
-+ Support ellipsis argument
-+ Add warning for same number of arguments with different arg names
-+ Prevent type constructors from having type declarations
++ Support more pattern matching (like empty lists and H|T notation)
 + Check for side effects
 + Support tail recursion
 + Support type inference
