@@ -20,7 +20,7 @@ Date: \tab {date}\cr
 License: \tab LGPL-3\cr
 LazyLoad: \tab yes\cr
 }
-R provides some functional programming facilities, but writing applications n R
+R provides some functional programming facilities, but writing applications in R
 there are few choices beyond S3, S4, and the newer Reference Classes. These are
 all object-oriented approaches. Data analysis relies so much on computations
 and data that a functional approach is really better suited for these types of
@@ -45,29 +45,33 @@ Some background on using guards and pattern matching:
 \code{\link{UseFunction}}, \code{\link{\%as\%}}
 }
 \examples{
-abs_max(a,b) \%::\% numeric : numeric : numeric
-abs_max(a,b) \%when\% {
-  is.numeric(a)
-  is.numeric(b)
+is.wholenumber <-
+  function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
+
+## Use built in types for type checking
+fib(n) \%::\% numeric : numeric
+fib(0) \%as\% 1
+fib(1) \%as\% 1
+fib(n) \%when\% {
+  is.wholenumber(n)
 } \%as\% {
-  pmax(abs(a), abs(b))
+  fib(n-1) + fib(n-2)
 }
+seal(fib)
+
+fib(5)
 
 
-abs_max(a,b) \%::\% character : character : numeric
-abs_max(a,b) \%as\%
-{
-  abs_max(as.numeric(a), as.numeric(b))
-}
+## Using custom types
+Integer(x) \%when\% { is.wholenumber(x) } \%as\% x
 
+fib.a(n) \%::\% Integer : Integer
+fib.a(0) \%as\% Integer(1)
+fib.a(1) \%as\% Integer(1)
+fib.a(n) \%as\% { Integer(fib.a(n-1) + fib.a(n-2)) }
+seal(fib.a)
 
-abs_max(a) \%as\% { max(abs(a)) }
-
-abs_max(2,-3)
-abs_max("3","-4")
-
-a <- rnorm(10)
-abs_max(a)
+fib.a(Integer(5))
 
 
 ## Newton-Raphson optimization

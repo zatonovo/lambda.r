@@ -12,8 +12,8 @@ compatible debugger.}
 describe(\dots)
 debug.lr(x)
 undebug.lr(x)
-print.lambdar.fun(x, \dots)
-print.lambdar.type(x, \dots)
+\method{print}{lambdar.fun}(x, \dots)
+\method{print}{lambdar.type}(x, \dots)
 }
 \arguments{
   \item{x}{The function}
