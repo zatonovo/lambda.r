@@ -1,3 +1,3 @@
-require('testthat')
-require('lambda.r')
+library(testthat)
+library_if_available(lambda.r)
 test_package('lambda.r')

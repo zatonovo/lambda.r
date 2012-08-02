@@ -1,3 +1,5 @@
+context("optional arguments")
+
 Prices(series, asset.class='equity', periodicity='daily') %as% 
 {
   series@asset.class <- asset.class
@@ -15,31 +17,25 @@ returns(x) %when% {
 seal(Prices)
 seal(returns)
 
-cat("Test 1\n")
 ps <- Prices(abs(rnorm(50)))
 expect_that(attr(ps,'asset.class'), equals('equity'))
 expect_that(attr(ps,'periodicity'), equals('daily'))
 
-cat("Test 2\n")
 ps <- Prices(abs(rnorm(50)), 'fx')
 expect_that(attr(ps,'asset.class'), equals('fx'))
 expect_that(attr(ps,'periodicity'), equals('daily'))
 
-cat("Test 3\n")
 ps <- Prices(abs(rnorm(50)), periodicity='monthly')
 expect_that(attr(ps,'asset.class'), equals('equity'))
 expect_that(attr(ps,'periodicity'), equals('monthly'))
 
-cat("Test 4\n")
 ps <- Prices(periodicity='monthly', series=abs(rnorm(50)))
 expect_that(attr(ps,'asset.class'), equals('equity'))
 expect_that(attr(ps,'periodicity'), equals('monthly'))
 
 
-cat("Test 5\n")
 expect_that(returns(ps), throws_error())
 
-cat("Test 6\n")
 ps <- Prices(abs(rnorm(50)))
 expect_that(length(returns(ps)), equals(length(ps) - 1))
 
@@ -71,11 +67,9 @@ freezing(x) %when% {
 seal(Temperature)
 seal(freezing)
 
-cat("Test 7\n")
 ctemp <- Temperature(20)
 expect_that(freezing(ctemp), is_false())
 
-cat("Test 8\n")
 ktemp <- Temperature(20, units='kelvin')
 expect_that(freezing(ktemp), is_true())
 

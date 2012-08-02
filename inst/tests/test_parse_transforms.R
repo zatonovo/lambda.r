@@ -1,3 +1,5 @@
+context("parse transforms")
+
 Prices(series) %as% 
 {
   series@asset.class <- 'equity'

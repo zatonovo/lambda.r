@@ -1,3 +1,5 @@
+context("performance")
+
 Returns(x) %as% x
 
 lrsd(x) %as% { sd(x) }

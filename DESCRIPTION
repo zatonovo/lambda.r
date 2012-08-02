@@ -4,6 +4,7 @@ Title: Functional programming in R
 Version: {version}
 Date: {date}
 Depends: parser
+Suggests: testthat
 Author: Brian Lee Yung Rowe
 Maintainer: Brian Lee Yung Rowe <r@nurometic.com>
 Description: Provides a syntax for functional programming including multi-part function definitions, guard statements, built-in (optional) type safety.

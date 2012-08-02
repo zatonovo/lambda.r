@@ -1,6 +1,7 @@
-cat("Test 1\n")
-is.wholenumber <-
-  function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
+context("dispatching")
+
+is.wholenumber <- function(x, tol=.Machine$double.eps^0.5)
+  abs(x - round(x)) < tol
 
 fib(0) %as% 1
 fib(1) %as% 1
@@ -13,7 +14,6 @@ seal(fib)
 
 expect_that(fib(5), equals(8))
 
-cat("Test 2\n")
 Integer(x) %as% x
 
 fib.a(n) %::% Integer : Integer
