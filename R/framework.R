@@ -56,7 +56,7 @@ require(parser)
 .ERR_NO_MATCH <- "No match for function"
 .ERR_USE_FUNCTION <- "No valid function for"
 .ERR_ENSURE_FAILED <- "Assertion '%s' failed for args = %s and result = %s"
-NewObject.old <- function(type.name, ...)
+NewObject <- function(type.name, ...)
 {
   result <- UseFunction(type.name, ...)
   type <- gsub('"','', type.name)
@@ -65,7 +65,7 @@ NewObject.old <- function(type.name, ...)
   result
 }
 
-NewObject <- function(type, ...)
+NewObject.old <- function(type, ...)
 {
   result <- UseFunction(type, ...)
   type.name <- deparse(substitute(type))
@@ -75,9 +75,15 @@ NewObject <- function(type, ...)
   result
 }
 
-UseFunction <- function(fn, ...)
+UseFunction <- function(fn.name, ...)
 {
-  fn.name <- deparse(substitute(fn))
+  #cat("Objects visible in UseFunction:\n")
+  #print(sapply(sys.frames(), function(x) ls(x)))
+  #cat("Call stack for UseFunction:\n")
+  #sapply(sys.calls(), function(x) print(x))
+  cat("\n")
+  #fn.name <- deparse(substitute(fn))
+  fn <- get(fn.name, inherits=TRUE)
   result <- NULL
   raw.args <- list(...)
   vs <- get_variant(fn,length(raw.args))
@@ -213,12 +219,12 @@ parse_fun <- function(it, raw=NULL)
     if (line.token == "'('") 
     {
       paren.level <- paren.level + 1
-      if (paren.level == 1) next
+      if (paren.level == 1) next # Opening function parenthesis
     }
     if (line.token == "')'")
     {
       paren.level <- paren.level - 1
-      if (paren.level < 1) 
+      if (paren.level < 1) # Closing function parenthesis
       {
         if (is.null(token)) token <- paste('.lambda',arg.idx,sep='_')
         if (is.null(pattern)) pattern <- NA
@@ -233,7 +239,7 @@ parse_fun <- function(it, raw=NULL)
     #cat("paren.level:",paren.level,"\n")
     if (paren.level == 1) 
     {
-      if (line.token %in% c('SYMBOL','SYMBOL_SUB'))
+      if (line.token %in% c('SYMBOL','SYMBOL_SUB','SYMBOL_FUNCTION_CALL'))
       {
         token <- line$text
         next
@@ -438,9 +444,11 @@ parse_types <- function(it, args, expr)
 
 add_variant <- function(fn.name, tree)
 {
-  # We use 2 because this is called from within the 'guard' function so the
-  # stack is two down
-  where <- topenv(parent.frame(2))
+  frames <- sys.frames()
+  if (length(frames) < 3)
+    where <- topenv(parent.frame(2))
+  else
+    where <- target_env(sys.calls()[[length(frames)-2]], length(frames))
 
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)
@@ -537,9 +545,9 @@ setup_parent <- function(parent, where)
 init_function <- function(name)
 {
   if (is.type(name)) 
-    pattern <- 'function(...) NewObject(%s,...)'
+    pattern <- 'function(...) NewObject("%s",...)'
   else
-    pattern <- 'function(...) UseFunction(%s,...)'
+    pattern <- 'function(...) UseFunction("%s",...)'
   fn <- eval(parse(text=sprintf(pattern,name)))
   if (is.type(name))
     attr(fn, 'class') <- c('lambdar.type',attr(fn,'class'))
@@ -599,3 +607,77 @@ really_get <- function(x)
   if (length(frame.idx) < 1) stop("Still couldn't find ",x,"\n")
   get(x, frames[frame.idx[length(frame.idx)]])
 }
+
+# Get the target env for the function definition. Normally this would be
+# just traversing the frame stack, but we need to add special logic to
+# handle eval() calls with an explicit environment.
+target_env <- function(head.call, frame.length)
+{
+  parsed.call <- attr(parser(text=deparse(head.call)),'data')
+  it <- iterator(parsed.call)
+  args <- parse_eval(it)
+
+  # 3 is a magic number based on the lambda.r call stack
+  stack.depth <- 3
+  top.frame <- topenv(parent.frame(stack.depth))
+  if (args$token[1] != 'eval') return(top.frame)
+  #if (nrow(args) < 3) return(top.frame)
+
+  eval.frame <- sys.frame(frame.length-stack.depth)
+  lambda.r_temp_env <- tryCatch(get('envir', envir=eval.frame),
+    error=function(e) { cat("WARNING: Falling back to top.frame\n"); top.frame})
+  if ('lambda.r_temp_env' %in% search())
+    detach('lambda.r_temp_env', character.only=TRUE)
+
+  #cat("Note: Forcing eval env onto search path\n")
+  attach(lambda.r_temp_env)
+  lambda.r_temp_env
+}
+
+parse_eval <- function(it, raw=NULL)
+{
+  if (!is.null(raw))
+  {
+    if (!is.null(attr(raw,'data'))) raw <- attr(raw,'data')
+    it <- iterator(raw)
+  }
+  name <- get_name(it)
+  paren.level <- 0
+  node <- 'function.name'
+  out <- data.frame(paren.level=paren.level, node=node, token=name,
+    pattern=NA, default=NA, stringsAsFactors=FALSE)
+
+  arg.idx <- 1
+  node <- 'argument'
+  token <- NULL
+  while (!is.na(line <- it()) && TRUE)
+  {
+    line.token <- line$token.desc
+    if (line.token == 'expr') next
+    if (line.token == "'('") 
+    {
+      paren.level <- paren.level + 1
+      if (paren.level == 1) next # Opening function parenthesis
+    }
+    if (line.token == "')'")
+    {
+      paren.level <- paren.level - 1
+      if (paren.level < 1) # Closing function parenthesis
+      {
+        out <- rbind(out, c(1,node,paste(token,collapse=' '),NA,NA))
+        break
+      }
+    }
+
+    if (paren.level == 1 && line.token == "','")
+    {
+      out <- rbind(out, c(paren.level,node,paste(token,collapse=' '),NA,NA))
+      token <- NULL
+      arg.idx <- arg.idx + 1
+      next
+    }
+    token <- c(token, line$text)
+  }
+  out
+}
+
