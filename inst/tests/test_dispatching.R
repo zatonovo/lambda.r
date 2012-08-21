@@ -1,33 +1,9 @@
 context("dispatching")
 
-#cat("Performing simple evaluation\n")
-#eval({
-#  is.wholenumber <- function(x, tol=.Machine$double.eps^0.5)
-#    abs(x - round(x)) < tol
-#  fib(0) %as% 1
-#  fib(1) %as% 1
-#  fib(n) %when% {
-#    is.wholenumber(n)
-#  } %as% {
-#    fib(n-1) + fib(n-2)
-#  }
-#  seal(fib)
-#
-#  cat("Definition complete\n")
-#  #cat("Objects in environment:\n")
-#  #print(sapply(sys.frames(), function(x) ls(x)))
-#  #cat("\n")
-#  out <- fib(5)
-#  cat("Result =",out,"\n")
-#})
-
-
-# debug(target_env)
-# debug(add_variant)
 test_that("fibonacci with guards and no type declaration", {
   is.wholenumber <- function(x, tol=.Machine$double.eps^0.5)
     abs(x - round(x)) < tol
-  cat(ls(), sep="\n")
+
   fib(0) %as% 1
   fib(1) %as% 1
   fib(n) %when% {

@@ -40,6 +40,6 @@ test_that("center ellipsis", {
   data <- data.frame(group=gl(2,10,20,labels=c("Ctl","Trt")), weight=c(ctl, trt))
   lm.1 <- regress(weight ~ group, data=data)
   lm.2 <- regress(data=data, formula=weight ~ group)
-  expect_that(lm.2$coefficients == lm.1$coefficients, is_true())
-  expect_that(lm.2$residuals == lm.1$residuals, is_true())
+  expect_that(all(lm.2$coefficients == lm.1$coefficients), is_true())
+  expect_that(all(lm.2$residuals == lm.1$residuals), is_true())
 })

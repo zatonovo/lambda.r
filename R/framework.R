@@ -81,7 +81,7 @@ UseFunction <- function(fn.name, ...)
   #print(sapply(sys.frames(), function(x) ls(x)))
   #cat("Call stack for UseFunction:\n")
   #sapply(sys.calls(), function(x) print(x))
-  cat("\n")
+  #cat("\n")
   #fn.name <- deparse(substitute(fn))
   fn <- get(fn.name, inherits=TRUE)
   result <- NULL
@@ -442,13 +442,23 @@ parse_types <- function(it, args, expr)
   types[,c('line1','token.desc','text')]
 }
 
+from_root_env <- function(frames)
+{
+  length(frames) < 3
+}
+
 add_variant <- function(fn.name, tree)
 {
   frames <- sys.frames()
-  if (length(frames) < 3)
-    where <- topenv(parent.frame(2))
+
+  if (from_root_env(frames)) where <- topenv(parent.frame(2))
   else
-    where <- target_env(sys.calls()[[length(frames)-2]], length(frames))
+  {
+    if ('lambda.r_temp_env' %in% search())
+      detach('lambda.r_temp_env', character.only=TRUE)
+    my.call <- sys.calls()[[length(frames)-2]]
+    where <- target_env(my.call, length(frames))
+  }
 
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)
@@ -467,6 +477,7 @@ add_variant <- function(fn.name, tree)
   attr(fn,'variants') <- variants
 
   assign(fn.name, fn, where)
+  if (! from_root_env(frames)) attach(where, name='lambda.r_temp_env')
   invisible()
 }
 
@@ -479,12 +490,16 @@ get_variant <- function(fn, arg.length)
   raw[matches]
 }
 
+# Adds type constraint to function
 # Type definitions are always additive
 add_type <- function(fn.name, tree)
 {
-  # We use 2 because this is called from within the 'guard' function so the
-  # stack is two down
-  where <- topenv(parent.frame(2))
+  frames <- sys.frames()
+  if (length(frames) < 3)
+    where <- topenv(parent.frame(2))
+  else
+    where <- target_env(sys.calls()[[length(frames)-2]], length(frames))
+
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)
   types <- attr(fn,'types')
@@ -613,24 +628,20 @@ really_get <- function(x)
 # handle eval() calls with an explicit environment.
 target_env <- function(head.call, frame.length)
 {
+
   parsed.call <- attr(parser(text=deparse(head.call)),'data')
   it <- iterator(parsed.call)
   args <- parse_eval(it)
 
-  # 3 is a magic number based on the lambda.r call stack
+  # 3 is a magic number based on the lambda.r call stack to this function
   stack.depth <- 3
   top.frame <- topenv(parent.frame(stack.depth))
   if (args$token[1] != 'eval') return(top.frame)
-  #if (nrow(args) < 3) return(top.frame)
 
   eval.frame <- sys.frame(frame.length-stack.depth)
   lambda.r_temp_env <- tryCatch(get('envir', envir=eval.frame),
     error=function(e) { cat("WARNING: Falling back to top.frame\n"); top.frame})
-  if ('lambda.r_temp_env' %in% search())
-    detach('lambda.r_temp_env', character.only=TRUE)
 
-  #cat("Note: Forcing eval env onto search path\n")
-  attach(lambda.r_temp_env)
   lambda.r_temp_env
 }
 

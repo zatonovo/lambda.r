@@ -8,10 +8,6 @@ test_that("parse transforms 1", {
     series
   }
 
-  ps <- Prices(rnorm(50))
-  expect_that(attr(ps,'asset.class') == 'equity', is_true())
-  expect_that(attr(ps,'periodicity') == 'daily', is_true())
-
   returns(x) %when% {
     x@asset.class == "equity"
     x@periodicity == "daily"
@@ -19,7 +15,12 @@ test_that("parse transforms 1", {
     x[2:length(x)] / x[1:(length(x) - 1)] - 1
   }
 
-  expect_that(length(returns(ps)) == length(ps) - 1, is_true())
+  ps <- Prices(rnorm(50))
+  expect_that(attr(ps,'asset.class') == 'equity', is_true())
+  expect_that(attr(ps,'periodicity') == 'daily', is_true())
+
+  rs <- returns(ps)
+  expect_that(length(rs) == length(ps) - 1, is_true())
 })
 
 
@@ -43,6 +44,7 @@ test_that("parse transforms 2", {
   expect_that(attr(temp,'system') == 'metric', is_true())
   expect_that(attr(temp,'units') == 'celsius', is_true())
 
-  expect_that(freezing(temp), is_false())
+  act.1 <- freezing(temp)
+  expect_that(act.1, is_false())
 })
 
