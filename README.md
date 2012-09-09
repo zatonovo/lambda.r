@@ -14,15 +14,19 @@ Defining a function
 Functions are defined using %as% notation. Any block of code can be in the 
 function definition.
 
-    fib(n) %as% { fib(n-1) + fib(n-2) }
+```R
+fib(n) %as% { fib(n-1) + fib(n-2) }
+```
 
 Pattern matching
 ----------------
 Multi-part function definitions are easily constructed. For simple criteria,
 pattern matching of literals can be used directly in lambda-r.
 
-    fib(0) %as% 1
-    fib(1) %as% 1
+```R
+fib(0) %as% 1
+fib(1) %as% 1
+```
 
 Strings can also be pattern matched within definitions.
 
@@ -33,16 +37,20 @@ requires more detail than simple pattern matching. For these scenarios a guard
 statement is used to define the condition for execution. Guards are simply an 
 additional clause in the function definition.
 
-    fib(n) %when% { n >= 0 } %as% { fib(n-1) + fib(n-2) }
+```R
+fib(n) %when% { n >= 0 } %as% { fib(n-1) + fib(n-2) }
+```
 
 A function variant only executes if the guard statements all evaluate to true.
 As many guard statements as desired can be added in the block. Just separate
 them with either a new line or a semi-colon.
 
-    fib(n) %when% {
-      is.numeric(n)
-      n >= 0
-    } %as% { fib(n-1) + fib(n-2) }
+```R
+fib(n) %when% {
+  is.numeric(n)
+  n >= 0
+} %as% { fib(n-1) + fib(n-2) }
+```
 
 Note that in the above example the type check can be handled using a type 
 declaration, which is discussed below.
@@ -65,11 +73,15 @@ Defining a type
 ---------------
 Types are defined by defining their constructor.
 
-    Integer(x) %as% x
+```R
+Integer(x) %as% x
+```
 
 Instantiating the type is as simple as calling the function.
 
-    x <- Integer(5)
+```R
+x <- Integer(5)
+```
 
 Type declarations
 -----------------
@@ -80,7 +92,9 @@ called. The final type in the constraint is the return type, which is checked
 after a function is called. If the result does not have the correct return type,
 then the call will fail.
 
-    fib(n) %::% Integer : Integer
+```R
+fib(n) %::% Integer : Integer
+```
 
 Note that for a type to have effect on a definition, it must be declared prior
 to the function implementation. A single type declaration will retain scope
@@ -93,36 +107,44 @@ There are plenty of built-in types that are supported just like custom types
 defined in lambda-r. Use the same syntax for these types. In the example above
 we can just as easily declare
 
-    fib(n) %::% numeric : numeric
+```R
+fib(n) %::% numeric : numeric
+```
 
 or even 
 
-    fib(n) %::% Integer : numeric
+```R
+fib(n) %::% Integer : numeric
+```
 
 
 One Shot
 ========
 Here is the complete example with built-in types
 
-    fib(n) %::% numeric : numeric
-    fib(0) %as% 1
-    fib(1) %as% 1
-    fib(n) %as% { fib(n-1) + fib(n-2) }
+```R
+fib(n) %::% numeric : numeric
+fib(0) %as% 1
+fib(1) %as% 1
+fib(n) %as% { fib(n-1) + fib(n-2) }
 
-    fib(5)
-    seal(fib)
+fib(5)
+seal(fib)
+```
 
 and with custom types
 
-    Integer(x) %as% x
+```R
+Integer(x) %as% x
      
-    fib(n) %::% Integer : Integer
-    fib(0) %as% Integer(1)
-    fib(1) %as% Integer(1)
-    fib(n) %as% { Integer(fib(n-1) + fib(n-2)) }
+fib(n) %::% Integer : Integer
+fib(0) %as% Integer(1)
+fib(1) %as% Integer(1)
+fib(n) %as% { Integer(fib(n-1) + fib(n-2)) }
 
-    x <- Integer(5)
-    fib(x)
+x <- Integer(5)
+fib(x)
+```
 
 To ignore types altogether, just omit the type declaration.
 
@@ -138,24 +160,28 @@ Lambda R provides convenient syntax for interacting with attributes. This
 approach allows you to take advantage of existing functions for R data 
 structures since meta data is orthogonal to real data.
 
-    Temperature(x, system, units) %as%
-    {
-      x@system <- system
-      x@units <- units
-      x
-    }
+```R
+Temperature(x, system, units) %as%
+{
+  x@system <- system
+  x@units <- units
+  x
+}
+```
 
 These attributes can then be accessed in guards and function bodies using the
 same syntax.
 
-    freezing(x) %::% Temperature : logical
-    freezing(x) %when% {
-      x@system == 'metric'
-      x@units == 'celsius'
-    } %as% {
-      if (x < 0) { TRUE }
-      else { FALSE }
-    }
+```R
+freezing(x) %::% Temperature : logical
+freezing(x) %when% {
+  x@system == 'metric'
+  x@units == 'celsius'
+} %as% {
+  if (x < 0) { TRUE }
+  else { FALSE }
+}
+```
  
 
 Note that outside of lambda-r you must use the standard attr() function to 
@@ -169,22 +195,24 @@ default values. Lambda-R preserves this feature in multipart function
 definitions. Functions are matched based on the order in which they are 
 defined, and this holds true with functions with optional arguments.
 
-    Temperature(x, system="metric", units='celsius') %as%
-    {
-      x@system <- system
-      x@units <- units
-      x
-    }
+```R
+Temperature(x, system="metric", units='celsius') %as%
+{
+  x@system <- system
+  x@units <- units
+  x
+}
 
-    > ctemp <- Temperature(20)
-    > ctemp
-    [1] 20
-    attr(,"system")
-    [1] "metric"
-    attr(,"units")
-    [1] "celsius"
-    attr(,"class")
-    [1] "Temperature" "numeric"
+> ctemp <- Temperature(20)
+> ctemp
+[1] 20
+attr(,"system")
+[1] "metric"
+attr(,"units")
+[1] "celsius"
+attr(,"class")
+[1] "Temperature" "numeric"
+```
 
 The Ellipsis Argument
 ---------------------
@@ -192,14 +220,16 @@ Support for the ellipsis argument is built into lambda-r. Required arguments
 must still be matched, while any additional arguments will be enclosed in the 
 ellipsis. Here's an example using the plant data included in R's lm help page.
 
-    regress(formula, ..., na.action='na.fail') %as% {
-      lm(formula, ..., na.action=na.action)
-    }
+```R
+regress(formula, ..., na.action='na.fail') %as% {
+  lm(formula, ..., na.action=na.action)
+}
 
-    ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
-    trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
-    data <- data.frame(group=gl(2,10,20,labels=c("Ctl","Trt")), weight=c(ctl, trt))
-    lm.D9 <- regress(weight ~ group, data=data)
+ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
+trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
+data <- data.frame(group=gl(2,10,20,labels=c("Ctl","Trt")), weight=c(ctl, trt))
+lm.D9 <- regress(weight ~ group, data=data)
+```
 
 Care does need to be used with the ellipsis as it behaves like a greedy match,
 so subsequent definitions may not work as you intend when using the ellipsis
@@ -211,7 +241,9 @@ The examples above all hint at supporting named arguments. Named arguments can
 be mixed and matched with positional arguments just as in legacy function
 definitions.
 
-    lm.D9 <- regress(data=data, weight ~ group)
+```R
+lm.D9 <- regress(data=data, weight ~ group)
+```
 
 Sealing Definitions
 -------------------
@@ -219,7 +251,9 @@ Lambda-R has no way of knowing whether a function definition is complete or not.
 Explicitly telling lambda-r will ensure that any new function definitions will
 reset the function as opposed to append another definition.
 
-    seal(freezing)
+```R
+seal(freezing)
+```
 
 If providing a broad interface, be careful not to seal the function. Sealing is
 analogous to making a variable final in Java, such that no further modifications
@@ -235,17 +269,19 @@ useful bits. Viewing basic information about a function is accomplished by just
 typing out the function in the shell. This results in a dump of the type
 declarations and function signatures for the function.
 
-    > fib
-    <function>
-    [[1]]
-    fib(n) %::% Integer:Integer 
-    fib(0) %as% ...
-    [[2]]
-    fib(n) %::% Integer:Integer 
-    fib(1) %as% ...
-    [[3]]
-    fib(n) %::% Integer:Integer 
-    fib(n) %as% ...
+```R
+> fib
+<function>
+[[1]]
+fib(n) %::% Integer:Integer 
+fib(0) %as% ...
+[[2]]
+fib(n) %::% Integer:Integer 
+fib(1) %as% ...
+[[3]]
+fib(n) %::% Integer:Integer 
+fib(n) %as% ...
+```
 
 Actual function bodies are not displayed to minimize clutter. 
 
@@ -255,18 +291,22 @@ To view a full function definition, use the 'describe' function to get the
 definition of a specific function variant. The numbers separating each variant
 is the index to use.
 
-    > describe(fib,3)
-    function(n) { Integer ( fib ( n - 1 ) + fib ( n - 2 ) ) }
-    <environment: 0x10488ed10>
+```R
+> describe(fib,3)
+function(n) { Integer ( fib ( n - 1 ) + fib ( n - 2 ) ) }
+<environment: 0x10488ed10>
+```
 
 Examining Types
 ---------------
 A type constructor is similar to a normal function, and the same technique works
 to view a type body.
 
-    > describe(Integer,1)
-    function(x) { x }
-    <environment: 0x10494aca8>
+```R
+> describe(Integer,1)
+function(x) { x }
+<environment: 0x10494aca8>
+```
 
 Debugging
 ---------
@@ -283,7 +323,9 @@ some things that won't work.
 
 1. Complex mix and match of named and positional arguments
 
-    lm.D9 <- regress(data=data, formula=weight ~ group, NULL)
+```R
+lm.D9 <- regress(data=data, formula=weight ~ group, NULL)
+```
 
 Don't do this, please. It's bad style.
 
