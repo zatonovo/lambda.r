@@ -11,7 +11,7 @@ Basic Usage
 ===========
 Defining a function
 -------------------
-Functions are defined using %as% notation. Any block of code can be in the 
+Functions are defined using `%as%` notation. Any block of code can be in the 
 function definition.
 
 ```R
@@ -57,7 +57,10 @@ declaration, which is discussed below.
 
 For functions defined in multiple parts, each separate function variant is
 evaluated in the same order as they are defined. Hence a less restrictive
-variant that evaluates to true defined early in the chain will 
+variant that evaluates to true defined early in the chain of function
+definitions will take precedence over variants defined later. (If you are
+following along in sequence, the pattern matches for `fib(0)` and `fib(1)` will
+never be called since the first definition `fib(n)` will always evaulate to true).
 
 Types
 =====
@@ -71,16 +74,20 @@ execute if the types are correct.
 
 Defining a type
 ---------------
-Types are defined by defining their constructor.
+Types are defined by defining their constructor. The return value of the
+constructor is automatically typed. Hence the value x will be of type Integer.
 
 ```R
 Integer(x) %as% x
 ```
 
-Instantiating the type is as simple as calling the function.
+Instantiating the type is as simple as calling the function. Check the type
+using the standard S3 introspection function `class`. The `%isa%` operator
+can also be used to test whether an object is a particular type.
 
 ```R
 x <- Integer(5)
+x %isa% Integer
 ```
 
 Type declarations
@@ -94,10 +101,32 @@ then the call will fail.
 
 ```R
 fib(n) %::% Integer : Integer
+fib(0) %as% Integer(1)
+fib(1) %as% Integer(1)
+fib(n) %as% { fib(n-1) + fib(n-2) }
+
+fib(x)
 ```
 
-Note that for a type to have effect on a definition, it must be declared prior
-to the function implementation. A single type declaration will retain scope
+The call `fib(1)` will fail because `1` is not of type `Integer`.
+
+```R
+> fib(1)
+Error in UseFunction("fib", ...) : No valid function for 'fib(1)'
+```
+
+Properly typing the argument by calling `fib(Integer(1))` will give the
+correct output. Note that pattern matching works even with the custom type.
+
+```R
+> fib(Integer(1))
+[1] 1
+attr(,"class")
+[1] "Integer" "numeric"
+```
+
+Type constraints must be declared prior to the function implementation. Once
+declared, the type declaration will retain scope
 until another type declaration with the same number of parameters is declared
 (see tests/types.R for an example).
 
@@ -120,7 +149,7 @@ fib(n) %::% Integer : numeric
 
 One Shot
 ========
-Here is the complete example with built-in types
+Here is the complete example using built-in types:
 
 ```R
 fib(n) %::% numeric : numeric
@@ -132,7 +161,10 @@ fib(5)
 seal(fib)
 ```
 
-and with custom types
+To ignore types altogether, just omit the type declaration in the above listing
+and the code will evaluate the same.
+
+Here is the same example with custom types:
 
 ```R
 Integer(x) %as% x
@@ -140,25 +172,29 @@ Integer(x) %as% x
 fib(n) %::% Integer : Integer
 fib(0) %as% Integer(1)
 fib(1) %as% Integer(1)
-fib(n) %as% { Integer(fib(n-1) + fib(n-2)) }
+fib(n) %as% { fib(n-1) + fib(n-2) }
 
 x <- Integer(5)
 fib(x)
 ```
 
-To ignore types altogether, just omit the type declaration.
+The `seal` command in the first example prevents new statements from being
+added to an existing function definition. Instead new definitions reset the
+function.
 
 Sugar Coating
 =============
 All the great features of R function calls are still supported in lambda-r. In 
 addition, lambda-r provides some parse transforms to add some extra features
-to make application development even easier.
+to make application development even faster.
 
 Object Attributes
 -----------------
-Lambda R provides convenient syntax for interacting with attributes. This
-approach allows you to take advantage of existing functions for R data 
-structures since meta data is orthogonal to real data.
+Attributes are a form of meta data that decorate an object. This information
+can be used to simplify type structures retaining polymorphism and compatibility
+with existing functions while providing the detail needed for your application.
+Lambda-R provides convenient syntax for interacting with attributes via the `@`
+symbol.
 
 ```R
 Temperature(x, system, units) %as%
@@ -183,7 +219,6 @@ freezing(x) %when% {
 }
 ```
  
-
 Note that outside of lambda-r you must use the standard attr() function to 
 access specific attributes. Also note that attributes have not been tested with
 S4 objects.
