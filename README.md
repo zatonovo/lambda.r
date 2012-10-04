@@ -331,7 +331,8 @@ Don't do this, please. It's bad style.
 
 Future
 ======
-+ Support more pattern matching (like empty lists and H|T notation)
++ Support debugging functions in packages (e.g. debug.lr(futile.any::anynames))
++ Support more pattern matching (like empty lists)
 + Check for side effects
 + Support tail recursion
 + Support type inference

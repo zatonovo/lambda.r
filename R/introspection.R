@@ -1,3 +1,7 @@
+describe(fn, idx, raw=FALSE) %when% { raw } %as% {
+  class(fn) <- NULL
+  print(fn)
+}
 describe(fn, idx) %when% {
   idx > 0
 } %as% {

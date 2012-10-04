@@ -6,7 +6,7 @@ Date: {date}
 Depends: parser
 Suggests: testthat
 Author: Brian Lee Yung Rowe
-Maintainer: Brian Lee Yung Rowe <r@nurometic.com>
+Maintainer: Brian Lee Yung Rowe <r@zatonovo.com>
 Description: A language extension to efficiently write functional programs in R. Syntax extensions include multi-part function definitions, pattern matching, guard statements, built-in (optional) type safety.
 License: LGPL-3
 LazyLoad: yes

@@ -31,7 +31,7 @@ maintain.
 \author{
 Brian Lee Yung Rowe
 
-Maintainer: Brian Lee Yung Rowe <r@nurometic.com>
+Maintainer: Brian Lee Yung Rowe <r@zatonovo.com>
 }
 \references{
 Some background on using guards and pattern matching:
@@ -39,10 +39,11 @@ Some background on using guards and pattern matching:
   http://en.wikipedia.org/wiki/Guard_\%28computing\%29
 }
 \note{
+This package replaces futile.paradigm.
 }
 \keyword{ package }
 \seealso{
-\code{\link{UseFunction}}, \code{\link{\%as\%}}
+\code{\link{describe}}, \code{\link{debug.lr}}, \code{\link{UseFunction}}, \code{\link{\%as\%}}
 }
 \examples{
 is.wholenumber <-

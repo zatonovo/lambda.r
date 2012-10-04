@@ -39,7 +39,7 @@ test_that("optional arguments with guards 1", {
 })
 
 test_that("optional arguments with guards 2", {
-  Temperature(x, system="metric", units='celsius') %as%
+  Temperature(x, system='metric', units='celsius') %as%
   {
     x@system <- system
     x@units <- units
@@ -71,4 +71,14 @@ test_that("optional arguments with guards 2", {
 })
 
 
+test_that("optional arguments with function ref as default", {
+  avg(x, fun=mean) %as% { fun(x) }
+
+  a <- 1:4
+  a.mean <- avg(a)
+  expect_that(a.mean, equals(2.5))
+
+  a.med <- avg(a, median)
+  expect_that(a.med, equals(2.5))
+})
 

@@ -119,24 +119,30 @@ UseFunction <- function(fn.name, ...)
   result
 }
 
+
 fill_args <- function(raw.args, tree)
 {
   tree$args <- tree$args[tree$args$token != '...',]
-  default <- tree$args$default
+  defaults <- tree$args$default
 
   # This is for unnamed arguments
   if (is.null(names(raw.args)))
   {
-    if (length(raw.args) == length(default)) return(raw.args)
-    c(raw.args, default[(length(raw.args)+1):length(default)] )
+    if (length(raw.args) == length(defaults)) return(raw.args)
+    ds <- defaults[(length(raw.args)+1):length(defaults)]
+    vs <- sapply(ds, function(x) eval(parse(text=x)))
+    names(vs) <- NULL
+    c(raw.args, vs)
   }
   else
   {
-    names(default) <- tree$args$token
+    names(defaults) <- tree$args$token
     shim <- tree$args$token[1:length(raw.args)]
     names(raw.args)[names(raw.args) == ""] <- shim[names(raw.args) == '']
-    default[names(raw.args)] <- raw.args
-    default
+    defaults[names(raw.args)] <- raw.args
+    gaps <- ! names(defaults) %in% names(raw.args)
+    defaults[gaps] <- sapply(defaults[gaps], function(x) eval(parse(text=x)))
+    defaults
   }
 }
 
@@ -228,9 +234,11 @@ parse_fun <- function(it, raw=NULL)
       {
         if (is.null(token)) token <- paste('.lambda',arg.idx,sep='_')
         if (is.null(pattern)) pattern <- NA
-        else pattern <- strip_quotes(paste(pattern, collapse=' '))
+        #else pattern <- strip_quotes(paste(pattern, collapse=' '))
+        else pattern <- paste(pattern, collapse=' ')
         if (is.null(default)) default <- NA
-        else default <- strip_quotes(paste(default, collapse=' '))
+        #else default <- strip_quotes(paste(default, collapse=' '))
+        else default <- paste(default, collapse=' ')
         out <- rbind(out, c(1,node,token,pattern,default))
         break
       }
@@ -239,7 +247,7 @@ parse_fun <- function(it, raw=NULL)
     #cat("paren.level:",paren.level,"\n")
     if (paren.level == 1) 
     {
-      if (line.token %in% c('SYMBOL','SYMBOL_SUB','SYMBOL_FUNCTION_CALL'))
+      if (!in.default && line.token %in% c('SYMBOL','SYMBOL_SUB','SYMBOL_FUNCTION_CALL'))
       {
         token <- line$text
         next
@@ -254,9 +262,11 @@ parse_fun <- function(it, raw=NULL)
       {
         if (is.null(token)) token <- paste('.lambda',arg.idx,sep='_')
         if (is.null(pattern)) pattern <- NA
-        else pattern <- strip_quotes(paste(pattern, collapse=' '))
+        #else pattern <- strip_quotes(paste(pattern, collapse=' '))
+        else pattern <- paste(pattern, collapse=' ')
         if (is.null(default)) default <- NA
-        else default <- strip_quotes(paste(default, collapse=' '))
+        #else default <- strip_quotes(paste(default, collapse=' '))
+        else default <- paste(default, collapse=' ')
 
         out <- rbind(out, c(paren.level,node,token,pattern,default))
         token <- pattern <- default <- NULL
@@ -266,9 +276,12 @@ parse_fun <- function(it, raw=NULL)
         next
       }
 
-      if (in.default)
+      # TODO: Current structure will fail if a default uses a function call
+      # with multiple arguments (due to the comma)
+      if (in.default) {
         default <- c(default, line$text)
-      else
+        #cat("Adding to default value:",line$text,"\n")
+      } else
         pattern <- c(pattern, line$text)
     }
     else 
