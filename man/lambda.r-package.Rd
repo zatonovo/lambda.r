@@ -6,10 +6,13 @@
 Functional programming in R
 }
 \description{
-Provides syntax for writing functional programs in R. Instead of using S3 or S4,
-multi-part functions can be defined with pattern matching and explicit type
-declarations. This package also provides a mechanism for defining and creating
-types that is clean and intuitive.
+Lambda-R is a language extension that supports a functional programming style in
+R. As an alternative to the object-oriented systems, lambda-r offers a 
+functional syntax for defining types and functions. Functions can be defined in
+multiple parts (aka multi-part), use pattern matching, and guards while still
+supporting all the standard features of R. Type constructors are intuitive and
+type constraints can optionally be added to function definitions. Attributes
+can be accessed using a convenient syntax to reduce type clutter.
 }
 \details{
 \tabular{ll}{
@@ -20,13 +23,25 @@ Date: \tab {date}\cr
 License: \tab LGPL-3\cr
 LazyLoad: \tab yes\cr
 }
-R provides some functional programming facilities, but writing applications in R
-there are few choices beyond S3, S4, and the newer Reference Classes. These are
-all object-oriented approaches. Data analysis relies so much on computations
-and data that a functional approach is really better suited for these types of
-applications. Lambda-r introduces a syntax for writing applications using a
+R leverages many functional programming concepts, but application development in
+R is primarily an object-oriented affair. In fact there are few choices beyond
+S3, S4, and the newer Reference Classes, which are all object-oriented 
+approaches.
+Data analysis relies so much on mathematical operations, transformations,
+and computations that a functional approach is better suited for these
+types of applications. The reason is that object models rarely make sense in
+data analysis since so many transformations are applied to data sets. Trying to
+define classes and attach methods to them results in a futile enterprise rife
+with arbitrary choices and hierarchies. Functional programming avoids this
+unnecessary quandry by making objects and functions first class and preserving
+them as two distinct
+entities. Lambda-r introduces a syntax for writing applications using a
 declarative notation that helps make programs more modular and easier to
 maintain.
+
+Functions
+
+Types
 }
 \author{
 Brian Lee Yung Rowe
@@ -34,9 +49,10 @@ Brian Lee Yung Rowe
 Maintainer: Brian Lee Yung Rowe <r@zatonovo.com>
 }
 \references{
-Some background on using guards and pattern matching:
-  %http://www.erlang.org/doc/reference_manual/functions.html#id2271076
+Some background on guards and pattern matching:
   http://en.wikipedia.org/wiki/Guard_\%28computing\%29
+  http://www.erlang.org/doc/reference_manual/functions.html#id2271076
+  http://www.haskell.org/tutorial/patterns.html
 }
 \note{
 This package replaces futile.paradigm.
