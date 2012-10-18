@@ -4,7 +4,7 @@ Title: Functional programming in R
 Version: {version}
 Date: {date}
 Depends: parser
-Suggests: testthat
+Suggests: RUnit
 Author: Brian Lee Yung Rowe
 Maintainer: Brian Lee Yung Rowe <r@zatonovo.com>
 Description: A language extension to efficiently write functional programs in R. Syntax extensions include multi-part function definitions, pattern matching, guard statements, built-in (optional) type safety.

@@ -467,8 +467,8 @@ add_variant <- function(fn.name, tree)
   if (from_root_env(frames)) where <- topenv(parent.frame(2))
   else
   {
-    if ('lambda.r_temp_env' %in% search())
-      detach('lambda.r_temp_env', character.only=TRUE)
+    #if ('lambda.r_temp_env' %in% search())
+    #  detach('lambda.r_temp_env', character.only=TRUE)
     my.call <- sys.calls()[[length(frames)-2]]
     where <- target_env(my.call, length(frames))
   }
@@ -490,7 +490,7 @@ add_variant <- function(fn.name, tree)
   attr(fn,'variants') <- variants
 
   assign(fn.name, fn, where)
-  if (! from_root_env(frames)) attach(where, name='lambda.r_temp_env')
+  #if (! from_root_env(frames)) attach(where, name='lambda.r_temp_env')
   invisible()
 }
 
@@ -641,7 +641,6 @@ really_get <- function(x)
 # handle eval() calls with an explicit environment.
 target_env <- function(head.call, frame.length)
 {
-
   parsed.call <- attr(parser(text=deparse(head.call)),'data')
   it <- iterator(parsed.call)
   args <- parse_eval(it)
