@@ -3,7 +3,7 @@
 \alias{NewObject}
 \title{Primary dispatcher for functional programming }
 \description{UseFunction manages the dispatching for multipart functions in 
-lambda-r. This is used internally by lambda-r.}
+lambda.r. This is used internally by lambda.r.}
 \usage{
 UseFunction(fn.name, ...)
 NewObject(type.name, ...)

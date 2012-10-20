@@ -4,9 +4,9 @@
 \alias{undebug.lr}
 \alias{print.lambdar.fun}
 \alias{print.lambdar.type}
-\title{Introspection for lambda-r}
+\title{Introspection for lambda.r}
 \description{These tools are used for debugging and provide a means of examining
-the evaluation order of the function definitions as well as provide a lambda-r
+the evaluation order of the function definitions as well as provide a lambda.r
 compatible debugger.}
 \usage{
 describe(\dots)
@@ -33,7 +33,7 @@ undebug.lr(x)
 
   The 'debug.lr' and 'undebug.lr' functions are replacements for the built-in
   debug and undebug functions. They provide a mechanism to debug a complete
-  function, which is compatible with the dispatching in lambda-r. The semantics
+  function, which is compatible with the dispatching in lambda.r. The semantics
   is identical to the built-ins.
 }
 \value{

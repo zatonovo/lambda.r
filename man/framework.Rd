@@ -2,9 +2,9 @@
 \alias{\%as\%}
 \alias{\%::\%}
 \alias{seal}
-\title{Define functions and type constructors in lambda-r}
+\title{Define functions and type constructors in lambda.r}
 \description{The \%as\% function is used in place of the assignment operator for
-defining functions and type constructors with lambda-r. With the \%as\% operator
+defining functions and type constructors with lambda.r. With the \%as\% operator
 the full suite of functional features are available.}
 \usage{
 signature \%::\% types
@@ -18,11 +18,11 @@ seal(fn)
   \item{fn}{The function to seal}
 }
 \details{
-  The \%as\% and \%::\% operators are the primary touch points with lambda-r.
+  The \%as\% and \%::\% operators are the primary touch points with lambda.r.
 
   Functions are defined using \%as\% notation. Any block of code can be in the 
   function definition. For simple criteria, pattern matching of literals can 
-  be used directly in lambda-r. Executing different function clauses within a
+  be used directly in lambda.r. Executing different function clauses within a
   multipart function sometimes requires more detail than simple pattern 
   matching. For these scenarios a guard statement is used to define the 
   condition for execution. Guards are simply an additional clause in the 
@@ -35,7 +35,7 @@ seal(fn)
   them with either a new line or a semi-colon.
 
   Type constructors are no different from regular functions with one exception:
-  the function name must start with a capital letter. In lambda-r, types are
+  the function name must start with a capital letter. In lambda.r, types are
   defined in PascalCase and functions are lower case. Violating this rule will
   result in undefined behavior. The return value of the type constructor is the
   object that represents the type. It will have the type attached to the object.
@@ -45,9 +45,9 @@ seal(fn)
     x
   }}
 
-  Attributes can be accessed using lambda-r's at-notation, which borrows from
+  Attributes can be accessed using lambda.r's at-notation, which borrows from
   S4's member notation. These attributes are standard R attributes and should
-  not be confused with object properties. Hence with lambda-r it is possible to
+  not be confused with object properties. Hence with lambda.r it is possible to
   use both the $ to access named elements of lists and data.frames while using
   the @ symbol to access the object's attributes.
 

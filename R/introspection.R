@@ -32,7 +32,7 @@ print.lambdar.fun <- function(x, ...)
 {
   variants <- attr(x,'variants')
   types <- attr(x,'types')
-  if (is.null(variants)) stop("Lambda-R function incorrectly defined")
+  if (is.null(variants)) stop("Lambda.R function incorrectly defined")
   cat("<function>\n")
   fn <- function(idx)
   {
@@ -50,7 +50,7 @@ print.lambdar.type <- function(x, ...)
 {
   variants <- attr(x,'variants')
   types <- attr(x,'types')
-  if (is.null(variants)) stop("Lambda-R type constructor incorrectly defined")
+  if (is.null(variants)) stop("Lambda.R type constructor incorrectly defined")
   cat("<type constructor>\n")
   fn <- function(idx)
   {

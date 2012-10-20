@@ -6,8 +6,8 @@
 Functional programming in R
 }
 \description{
-Lambda-R is a language extension that supports a functional programming style in
-R. As an alternative to the object-oriented systems, lambda-r offers a 
+Lambda.R is a language extension that supports a functional programming style in
+R. As an alternative to the object-oriented systems, lambda.r offers a 
 functional syntax for defining types and functions. Functions can be defined in
 multiple parts (aka multi-part), use pattern matching, and guards while still
 supporting all the standard features of R. Type constructors are intuitive and
@@ -35,7 +35,7 @@ define classes and attach methods to them results in a futile enterprise rife
 with arbitrary choices and hierarchies. Functional programming avoids this
 unnecessary quandry by making objects and functions first class and preserving
 them as two distinct
-entities. Lambda-r introduces a syntax for writing applications using a
+entities. Lambda.R introduces a syntax for writing applications using a
 declarative notation that helps make programs more modular and easier to
 maintain.
 

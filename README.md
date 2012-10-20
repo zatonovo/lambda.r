@@ -1,6 +1,6 @@
 Description
 ===========
-Provides a syntax for writing functional programs in R. Lambda-R has a clean
+Provides a syntax for writing functional programs in R. Lambda.R has a clean
 syntax for defining multi-part functions with optional guard statements.
 Simple pattern matching is also supported. Types can be
 easily defined and instantiated using the same functional notation. Type 
@@ -21,7 +21,7 @@ fib(n) %as% { fib(n-1) + fib(n-2) }
 Pattern matching
 ----------------
 Multi-part function definitions are easily constructed. For simple criteria,
-pattern matching of literals can be used directly in lambda-r.
+pattern matching of literals can be used directly in lambda.r.
 
 ```R
 fib(0) %as% 1
@@ -64,7 +64,7 @@ never be called since the first definition `fib(n)` will always evaulate to true
 
 Types
 =====
-Lambda-R introduces types as an alternative to classes. Types are data 
+Lambda.R introduces types as an alternative to classes. Types are data 
 structures with type information attached to it. Like classes, constructors
 exist for types and one type can inherit from another type. The difference is
 that types do not have embedded methods. In functional programming, functions
@@ -133,7 +133,7 @@ until another type declaration with the same number of parameters is declared
 Legacy types
 ------------
 There are plenty of built-in types that are supported just like custom types 
-defined in lambda-r. Use the same syntax for these types. In the example above
+defined in lambda.r. Use the same syntax for these types. In the example above
 we can just as easily declare
 
 ```R
@@ -184,8 +184,8 @@ function.
 
 Sugar Coating
 =============
-All the great features of R function calls are still supported in lambda-r. In 
-addition, lambda-r provides some parse transforms to add some extra features
+All the great features of R function calls are still supported in lambda.r. In 
+addition, lambda.r provides some parse transforms to add some extra features
 to make application development even faster.
 
 Object Attributes
@@ -193,7 +193,7 @@ Object Attributes
 Attributes are a form of meta data that decorate an object. This information
 can be used to simplify type structures retaining polymorphism and compatibility
 with existing functions while providing the detail needed for your application.
-Lambda-R provides convenient syntax for interacting with attributes via the `@`
+Lambda.R provides convenient syntax for interacting with attributes via the `@`
 symbol.
 
 ```R
@@ -219,14 +219,14 @@ freezing(x) %when% {
 }
 ```
  
-Note that outside of lambda-r you must use the standard attr() function to 
+Note that outside of lambda.r you must use the standard attr() function to 
 access specific attributes. Also note that attributes have not been tested with
 S4 objects.
 
 Optional Arguments
 ------------------
 A nice convenience in R is the ability to specify optional arguments with
-default values. Lambda-R preserves this feature in multipart function 
+default values. Lambda.R preserves this feature in multipart function 
 definitions. Functions are matched based on the order in which they are 
 defined, and this holds true with functions with optional arguments.
 
@@ -251,7 +251,7 @@ attr(,"class")
 
 The Ellipsis Argument
 ---------------------
-Support for the ellipsis argument is built into lambda-r. Required arguments 
+Support for the ellipsis argument is built into lambda.r. Required arguments 
 must still be matched, while any additional arguments will be enclosed in the 
 ellipsis. Here's an example using the plant data included in R's lm help page.
 
@@ -282,8 +282,8 @@ lm.D9 <- regress(data=data, weight ~ group)
 
 Sealing Definitions
 -------------------
-Lambda-R has no way of knowing whether a function definition is complete or not.
-Explicitly telling lambda-r will ensure that any new function definitions will
+Lambda.R has no way of knowing whether a function definition is complete or not.
+Explicitly telling lambda.r will ensure that any new function definitions will
 reset the function as opposed to append another definition.
 
 ```R
@@ -298,8 +298,8 @@ intended to make application and package development more iterative.
 
 Introspection
 =============
-A function in lambda-r has a lot of meta data attached to it. Accessing the raw
-data can be overwhelming, so lambda-r provides facilities to extract the 
+A function in lambda.r has a lot of meta data attached to it. Accessing the raw
+data can be overwhelming, so lambda.r provides facilities to extract the 
 useful bits. Viewing basic information about a function is accomplished by just
 typing out the function in the shell. This results in a dump of the type
 declarations and function signatures for the function.
@@ -345,7 +345,7 @@ function(x) { x }
 
 Debugging
 ---------
-The standard debug function will not work with lambda-r functions. Instead, use
+The standard debug function will not work with lambda.r functions. Instead, use
 the included functions debug.lr and undebug.lr. These functions will allow you
 to debug through a complete multipart function call.
 
