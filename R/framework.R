@@ -398,8 +398,9 @@ is.type <- function(fn.string)
 parse_body <- function(it)
 {
   body <- NULL
+  # Skip until we get to the 
   while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
-  if (line$text == '%as%')
+  if (gsub(" ", "", line$text, fixed=TRUE) == '%as%')
   {
     needs.wrapping <- FALSE
     while (!is.na(line <- it()) && TRUE)
