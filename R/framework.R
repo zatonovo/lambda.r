@@ -8,6 +8,8 @@ require(parser)
   text <- paste(s.expr,t.expr, sep=" %::% ")
   expr <- parser(text=text)
   raw <- attr(expr,"data")
+  # SPECIAL tokens now appear with a leading white space
+  raw$text <- sub("^ ","", raw$text)
 
   it <- iterator(raw)
   tree <- list()
@@ -32,6 +34,10 @@ require(parser)
   text <- paste(s.expr,b.expr, sep=" %as% ")
   expr <- parser(text=text)
   raw <- attr(expr,"data")
+  # SPECIAL tokens now appear with a leading white space
+  raw$text <- sub("^ ","", raw$text)
+  #raw[raw$token.desc=='SPECIAL','text'] <- 
+  #  gsub(" ","", raw[raw$token.desc=='SPECIAL','text'], fixed=TRUE)
   it <- iterator(raw)
 
   tree <- list()
@@ -400,7 +406,7 @@ parse_body <- function(it)
   body <- NULL
   # Skip until we get to the 
   while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
-  if (gsub(" ", "", line$text, fixed=TRUE) == '%as%')
+  if (line$text == '%as%')
   {
     needs.wrapping <- FALSE
     while (!is.na(line <- it()) && TRUE)
