@@ -2,19 +2,14 @@
 # f(a,b) %::% A : B : C
 '%::%' <- function(signature, types)
 {
+  options(keep.source=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   t.expr <- paste(deparse(substitute(types)), collapse="\n")
   text <- paste(s.expr,t.expr, sep=" %::% ")
-  cat("Type declaration is",text,"\n")
   raw <- getParseData(parse(text=text))
-  cat("Raw parse tree is:\n")
-  print(raw)
-  cat(raw)
-  cat("\n")
   # SPECIAL tokens now appear with a leading white space
   raw$text <- sub("^ ","", raw$text)
 
-  cat("Getting iterator\n")
   it <- iterator(raw)
   tree <- list(args=NULL)
   args_expr <- parse_fun(it)
@@ -34,6 +29,7 @@
 # f(a,b) %as% { a + b }
 '%as%' <- function(signature, body)
 {
+  options(keep.source=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   b.expr <- paste(deparse(substitute(body)), collapse="\n")
   text <- paste(s.expr,b.expr, sep=" %as% ")
