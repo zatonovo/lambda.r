@@ -2,21 +2,15 @@
 # f(a,b) %::% A : B : C
 '%::%' <- function(signature, types)
 {
+  options(keep.source=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   t.expr <- paste(deparse(substitute(types)), collapse="\n")
   text <- paste(s.expr,t.expr, sep=" %::% ")
-  cat("Type declaration is",text,"\n")
   raw <- getParseData(parse(text=text))
-  cat("Raw parse tree is:\n")
-  print(raw)
-  cat(raw)
-  cat("\n")
   # SPECIAL tokens now appear with a leading white space
   raw$text <- sub("^ ","", raw$text)
 
-  cat("Getting iterator\n")
   it <- iterator(raw)
-  cat("Got iterator\n")
   tree <- list()
   args_expr <- parse_fun(it)
   name <- args_expr$token[1]
@@ -34,6 +28,7 @@
 # f(a,b) %as% { a + b }
 '%as%' <- function(signature, body)
 {
+  options(keep.source=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   b.expr <- paste(deparse(substitute(body)), collapse="\n")
   text <- paste(s.expr,b.expr, sep=" %as% ")
@@ -72,16 +67,6 @@ NewObject <- function(type.name, ...)
   type <- gsub('"','', type.name)
   if (!type %in% class(result))
     class(result) <- c(type, class(result))
-  result
-}
-
-NewObject.old <- function(type, ...)
-{
-  result <- UseFunction(type, ...)
-  type.name <- deparse(substitute(type))
-  type.name <- gsub('"','', type.name)
-  if (!type.name %in% class(result))
-    class(result) <- c(type.name, class(result))
   result
 }
 
