@@ -366,6 +366,18 @@ Don't do this, please. It's bad style.
 
 Future
 ======
++ Handle function types in type declarations
++ Handle 0 argument functions
++ Handle default arguments that execute a function
++ Replace duplicate functions based on signature (reduces need for seal)
++ Support type variables
++ Think about supporting namespaces
++ Support NULL and Invisible return types
++ Support take, drop, cycle
++ Support partial function application
++ Guard parsing fails on sum(pay[1], spend[1], save[1]) == 1 (probably comma)
++ Guard parsing fails on length(grep('\\.R$',config.file)) > 0
++ Support *apply and lambda expressions in guard statements
 + Support debugging functions in packages (e.g. debug.lr(futile.any::anynames))
 + Support more pattern matching (like empty lists)
 + Check for side effects

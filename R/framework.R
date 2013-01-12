@@ -5,6 +5,7 @@ require(parser)
 {
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   t.expr <- paste(deparse(substitute(types)), collapse="\n")
+  t.expr <- gsub('\bFunction\b','function',t.expr, perl=TRUE)
   text <- paste(s.expr,t.expr, sep=" %::% ")
   expr <- parser(text=text)
   raw <- attr(expr,"data")
