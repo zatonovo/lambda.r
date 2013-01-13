@@ -5,6 +5,7 @@ require(parser)
 {
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   t.expr <- paste(deparse(substitute(types)), collapse="\n")
+  # Use Function as a proxy for function
   t.expr <- gsub('\bFunction\b','function',t.expr, perl=TRUE)
   text <- paste(s.expr,t.expr, sep=" %::% ")
   expr <- parser(text=text)
@@ -69,16 +70,6 @@ NewObject <- function(type.name, ...)
   type <- gsub('"','', type.name)
   if (!type %in% class(result))
     class(result) <- c(type, class(result))
-  result
-}
-
-NewObject.old <- function(type, ...)
-{
-  result <- UseFunction(type, ...)
-  type.name <- deparse(substitute(type))
-  type.name <- gsub('"','', type.name)
-  if (!type.name %in% class(result))
-    class(result) <- c(type.name, class(result))
   result
 }
 
@@ -160,14 +151,36 @@ check_types <- function(raw.types, raw.args)
   types <- raw.types$types
   if (nrow(types) - 1 != length(raw.args)) return(FALSE)
   arg.types <- sapply(raw.args, function(x) class(x))
+
   idx <- 1:length(raw.args)
+
+  # Check for type variables (can only be a-z)
+  type.map <- list()
+  if (any(types %in% letters)) {
+    function(x) {
+      the.type <- types$text[x]
+      if (! the.type %in% letters) return(the.type)
+
+      # Fill in each variable as encountered and create a map with the types
+      # If an inconsistency is found, error out. Otherwise continue with
+      # checking explicit types
+      if (! is.null(type.map[the.type])) {
+        if (type.map[the.type] != arg.types[[x]]) return(FALSE)
+      }
+      else {
+        type.map[the.type] <<- arg.types[[x]]
+      }
+      arg.types[[x]]
+    }
+  }
+
   if (!is.null(ncol(arg.types)) && ncol(arg.types) > 1)
     all(sapply(idx, function(x) types$text[x] %in% arg.types[,x]))
   else
     all(sapply(idx, function(x) types$text[x] %in% arg.types[[x]]))
 }
 
-.SIMPLE_TYPES <- c('numeric','character','POSIXt','POSIXct')
+.SIMPLE_TYPES <- c('numeric','character','POSIXt','POSIXct','Date')
 .is.simple <- function(x) any(class(x) %in% .SIMPLE_TYPES)
 as_simple <- function(x)
 {

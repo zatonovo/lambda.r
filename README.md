@@ -364,13 +364,19 @@ lm.D9 <- regress(data=data, formula=weight ~ group, NULL)
 
 Don't do this, please. It's bad style.
 
+New 
+===
++ Handle function types in type declarations
+
 Future
 ======
-+ Handle function types in type declarations
++ Support type variables
 + Handle 0 argument functions
 + Handle default arguments that execute a function
 + Replace duplicate functions based on signature (reduces need for seal)
-+ Support type variables
++ > log.debug("foo")
+Error in UseFunction("log.appender", ...) : 
+  Expected 'numeric' as return type but found 'function' for 'log.appender(ROOT)
 + Think about supporting namespaces
 + Support NULL and Invisible return types
 + Support take, drop, cycle
