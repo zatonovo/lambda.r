@@ -364,6 +364,14 @@ lm.D9 <- regress(data=data, formula=weight ~ group, NULL)
 
 Don't do this, please. It's bad style.
 
+R3.0.0 Support
+==============
++ DESCRIPTION: Remove Depends: parser
++ R/framework.R: Replace attr(parser(text=...), 'data') -> getParseData(parse(text=...))
++ R/framework.R: Replace line$token.desc -> line.token
++ R/framework.R: iterator() - Remove empty expression blocks
+  tree <- tree[! (tree$token=='expr' & tree$text==''),]
+
 Future
 ======
 + Support debugging functions in packages (e.g. debug.lr(futile.any::anynames))
@@ -371,3 +379,4 @@ Future
 + Check for side effects
 + Support tail recursion
 + Support type inference
+
