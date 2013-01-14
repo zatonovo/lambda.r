@@ -367,13 +367,13 @@ Don't do this, please. It's bad style.
 New 
 ===
 + Handle function types in type declarations
++ Support type variables
 
 Future
 ======
-+ Support type variables
++ Replace duplicate functions based on signature (reduces need for seal)
 + Handle 0 argument functions
 + Handle default arguments that execute a function
-+ Replace duplicate functions based on signature (reduces need for seal)
 + > log.debug("foo")
 Error in UseFunction("log.appender", ...) : 
   Expected 'numeric' as return type but found 'function' for 'log.appender(ROOT)

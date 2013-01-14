@@ -5,8 +5,6 @@ require(parser)
 {
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   t.expr <- paste(deparse(substitute(types)), collapse="\n")
-  # Use Function as a proxy for function
-  t.expr <- gsub('\bFunction\b','function',t.expr, perl=TRUE)
   text <- paste(s.expr,t.expr, sep=" %::% ")
   expr <- parser(text=text)
   raw <- attr(expr,"data")
@@ -105,9 +103,20 @@ UseFunction <- function(fn.name, ...)
 
   if (!is.null(full.type))
   {
-    if (!full.type$types$text[length(raw.args)+1] %in% class(result))
+    return.type <- return_type(full.type, full.args)
+    # Use Function as a proxy for function
+    return.type <- gsub('\\bFunction\\b','function',return.type, perl=TRUE)
+    if (return.type == '.lambda.r_UNIQUE')
     {
-      exp <- full.type$types$text[length(raw.args)+1]
+      act <- paste(class(result), collapse=', ')
+      if (class(result) %in% sapply(raw.args, class)) {
+        msg <- sprintf("Expected unique return type but found '%s' for",act)
+        stop(use_error(msg,fn.name,raw.args))
+      }
+    }
+    else if (!return.type %in% class(result))
+    {
+      exp <- return.type
       act <- paste(class(result), collapse=', ')
       msg <- sprintf("Expected '%s' as return type but found '%s' for",exp,act)
       stop(use_error(msg,fn.name,raw.args))
@@ -148,36 +157,70 @@ fill_args <- function(raw.args, tree)
 check_types <- function(raw.types, raw.args)
 {
   if (is.null(raw.types)) return(TRUE)
-  types <- raw.types$types
-  if (nrow(types) - 1 != length(raw.args)) return(FALSE)
+  declared.types <- raw.types$types$text
+  if (nrow(raw.types$types) - 1 != length(raw.args)) return(FALSE)
   arg.types <- sapply(raw.args, function(x) class(x))
 
   idx <- 1:length(raw.args)
 
   # Check for type variables (can only be a-z)
   type.map <- list()
-  if (any(types %in% letters)) {
-    function(x) {
-      the.type <- types$text[x]
+  if (any(declared.types %in% letters)) {
+    fn <- function(x) {
+      the.type <- declared.types[x]
       if (! the.type %in% letters) return(the.type)
 
-      # Fill in each variable as encountered and create a map with the types
-      # If an inconsistency is found, error out. Otherwise continue with
-      # checking explicit types
-      if (! is.null(type.map[the.type])) {
-        if (type.map[the.type] != arg.types[[x]]) return(FALSE)
+      if (is.null(type.map[[the.type]])) {
+        if (arg.types[[x]] %in% type.map)
+          type.map[[the.type]] <<- paste("!",arg.types[[x]],sep='')
+        # Add the new type if it doesn't exist
+        else
+          type.map[[the.type]] <<- arg.types[[x]]
       }
-      else {
-        type.map[the.type] <<- arg.types[[x]]
-      }
-      arg.types[[x]]
+
+      # Now use the map to fill in the declared type
+      type.map[[the.type]]
     }
+    declared.types <- sapply(1:(length(declared.types)-1), fn)
   }
 
   if (!is.null(ncol(arg.types)) && ncol(arg.types) > 1)
-    all(sapply(idx, function(x) types$text[x] %in% arg.types[,x]))
+    all(sapply(idx, function(x) declared.types[x] %in% arg.types[,x]))
   else
-    all(sapply(idx, function(x) types$text[x] %in% arg.types[[x]]))
+    all(sapply(idx, function(x) declared.types[x] %in% arg.types[[x]]))
+}
+
+# Get the return type of a function declaration. This is aware of type
+# variables.
+return_type <- function(raw.types, raw.args)
+{
+  declared.types <- raw.types$types$text
+  if (nrow(raw.types$types) - 1 != length(raw.args)) return(MissingReturnType)
+  arg.types <- sapply(raw.args, function(x) class(x))
+
+  idx <- 1:length(raw.args)
+
+  # Check for type variables (can only be a-z)
+  ret.type <- declared.types[length(declared.types)]
+  type.map <- list()
+  if (ret.type %in% letters) {
+    fn <- function(x) {
+      the.type <- declared.types[x]
+      if (! the.type %in% letters) return(the.type)
+
+      if (is.null(type.map[[the.type]])) {
+        if (arg.types[[x]] %in% type.map)
+          type.map[[the.type]] <<- paste("!",arg.types[[x]],sep='')
+        # Add the new type if it doesn't exist
+        else
+          type.map[[the.type]] <<- arg.types[[x]]
+      }
+    }
+    sapply(1:(length(declared.types)-1), fn)
+    ret.type <- type.map[[ret.type]]
+    if (is.null(ret.type)) ret.type <- ".lambda.r_UNIQUE"
+  }
+  ret.type
 }
 
 .SIMPLE_TYPES <- c('numeric','character','POSIXt','POSIXct','Date')
