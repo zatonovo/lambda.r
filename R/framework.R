@@ -36,8 +36,6 @@ require(parser)
   raw <- attr(expr,"data")
   # SPECIAL tokens now appear with a leading white space
   raw$text <- sub("^ ","", raw$text)
-  #raw[raw$token.desc=='SPECIAL','text'] <- 
-  #  gsub(" ","", raw[raw$token.desc=='SPECIAL','text'], fixed=TRUE)
   it <- iterator(raw)
 
   tree <- list()
@@ -540,8 +538,8 @@ add_variant <- function(fn.name, tree)
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)
   variants <- attr(fn,'variants')
-
   args <- tree$args
+
   required.args <- length(args$default[is.na(args$default)])
   if ('...' %in% tree$args$token)
     tree$accepts <- c(required.args : nrow(args) - 1, Inf)
@@ -550,7 +548,11 @@ add_variant <- function(fn.name, tree)
   type.index <- get_type_index(fn, nrow(args))
   if (!is.null(type.index) && length(type.index) > 0)
     tree$type.index <- type.index
-  variants[[length(variants) + 1]] <- tree
+
+  # Replace existing function clauses if there is a signature match
+  idx <- has_variant(variants, args)
+  if (length(idx) > 0) variants[[idx]] <- tree
+  else variants[[length(variants) + 1]] <- tree
   attr(fn,'variants') <- variants
 
   assign(fn.name, fn, where)
@@ -565,6 +567,20 @@ get_variant <- function(fn, arg.length)
     arg.length >= min(x$accepts) & arg.length <= max(x$accepts)
   matches <- sapply(raw, match.fn)
   raw[matches]
+}
+
+# Check whether this function already has the given variant
+has_variant <- function(variants, args)
+{
+  if (length(variants) == 0) return(variants)
+
+  keys <- colnames(args)[! colnames(args) %in% 'default']
+  fn <- function(x) {
+    if (nrow(variants[[x]]$args) != nrow(args)) return(NA)
+    ifelse(all(variants[[x]]$args[,keys] == args[,keys]), x, NA)
+  }
+  out <- sapply(1:length(variants), fn)
+  out[!is.na(out)]
 }
 
 # Adds type constraint to function

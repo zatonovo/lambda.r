@@ -368,10 +368,10 @@ New
 ===
 + Handle function types in type declarations
 + Support type variables
++ Auto-replace function definitions with a matching signature (no need for seal)
 
 Future
 ======
-+ Replace duplicate functions based on signature (reduces need for seal)
 + Handle 0 argument functions
 + Handle default arguments that execute a function
 + > log.debug("foo")
