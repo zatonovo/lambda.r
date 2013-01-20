@@ -12,10 +12,11 @@ require(parser)
   raw$text <- sub("^ ","", raw$text)
 
   it <- iterator(raw)
-  tree <- list()
+  tree <- list(args=NULL)
   args_expr <- parse_fun(it)
   name <- args_expr$token[1]
-  tree$args <- args_expr[2:nrow(args_expr),]
+  if (nrow(args_expr) > 1)
+    tree$args <- args_expr[2:nrow(args_expr),]
   tree$types <- parse_types(it, tree$args, t.expr)
   tree$signature <- paste(s.expr,"%::%",t.expr, sep=' ')
 
@@ -38,13 +39,15 @@ require(parser)
   raw$text <- sub("^ ","", raw$text)
   it <- iterator(raw)
 
-  tree <- list()
+  tree <- list(args=NULL)
   args_expr <- parse_fun(it)
   name <- args_expr$token[1]
-  tree$args <- args_expr[2:nrow(args_expr),]
+  if (nrow(args_expr) > 1)
+    tree$args <- args_expr[2:nrow(args_expr),]
   guard_expr <- parse_guard(it)
   guard_expr <- transform_attrs(guard_expr)
-  tree$guard <- guard_fn(tree$args, guard_expr)
+  if (!is.null(tree$args))
+    tree$guard <- guard_fn(tree$args, guard_expr)
 
   body_expr <- parse_body(it)
   body_expr <- transform_attrs(body_expr)
@@ -127,6 +130,8 @@ UseFunction <- function(fn.name, ...)
 
 fill_args <- function(raw.args, tree)
 {
+  if (is.null(tree$args)) return(list())
+
   tree$args <- tree$args[tree$args$token != '...',]
   defaults <- tree$args$default
 
@@ -293,6 +298,9 @@ parse_fun <- function(it, raw=NULL)
       paren.level <- paren.level - 1
       if (paren.level < 1) # Closing function parenthesis
       {
+        # Check for 0 argument function
+        if (is.null(token) && is.null(pattern)) break
+        # Otherwise...
         if (is.null(token)) token <- paste('.lambda',arg.idx,sep='_')
         if (is.null(pattern)) pattern <- NA
         #else pattern <- strip_quotes(paste(pattern, collapse=' '))
@@ -383,7 +391,6 @@ parse_guard <- function(it)
 guard_fn <- function(raw.args, tree)
 {
   lines <- NULL
-  args <- raw.args$token
   # Add any pattern matches
   if (any(!is.na(raw.args$pattern)))
   {
@@ -402,7 +409,7 @@ guard_fn <- function(raw.args, tree)
   if (length(lines) < 1) return(NULL)
 
   body <- paste(lines, collapse=' & ')
-  arg.string <- paste(args, collapse=',')
+  arg.string <- paste(raw.args$token, collapse=',')
   fn.string <- sprintf("function(%s) { %s }", arg.string, body)
   eval(parse(text=fn.string))
 }
@@ -480,7 +487,6 @@ body_fn <- function(raw.args, tree)
 {
   if (tree$token.desc[1] == "'{'") tree <- tree[2:(nrow(tree)-1), ]
   lines <- NULL
-  args <- raw.args$token
 
   if (!is.null(tree))
   {
@@ -492,7 +498,10 @@ body_fn <- function(raw.args, tree)
   if (length(lines) < 1) return(NULL)
 
   body <- paste(lines, collapse='\n')
-  arg.string <- paste(args, collapse=',')
+  if (is.null(raw.args))
+    arg.string <- ''
+  else
+    arg.string <- paste(raw.args$token, collapse=',')
   fn.string <- sprintf("function(%s) { %s }", arg.string, body)
   eval(parse(text=fn.string))
 }
@@ -511,8 +520,13 @@ parse_types <- function(it, args, expr)
       types <- rbind(types, line)
     }
   }
-  if (nrow(args) != nrow(types) - 1)
-    stop("Incorrect number of parameters in type declaration")
+  if (is.null(args)) {
+    if (nrow(types) != 1)
+      stop("Incorrect number of parameters in type declaration")
+  } else {
+    if (nrow(args) != nrow(types) - 1)
+      stop("Incorrect number of parameters in type declaration")
+  }
 
   types[,c('line1','token.desc','text')]
 }
@@ -538,19 +552,26 @@ add_variant <- function(fn.name, tree)
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)
   variants <- attr(fn,'variants')
-  args <- tree$args
+  active.type <- attr(fn,'active.type')
 
-  required.args <- length(args$default[is.na(args$default)])
-  if ('...' %in% tree$args$token)
-    tree$accepts <- c(required.args : nrow(args) - 1, Inf)
-  else
-    tree$accepts <- required.args : nrow(args)
-  type.index <- get_type_index(fn, nrow(args))
-  if (!is.null(type.index) && length(type.index) > 0)
-    tree$type.index <- type.index
+  if (is.null(tree$args))
+    tree$accepts <- 0
+  else {
+    args <- tree$args
+    required.args <- length(args$default[is.na(args$default)])
+    if ('...' %in% tree$args$token)
+      tree$accepts <- c(required.args : nrow(args) - 1, Inf)
+    else
+      tree$accepts <- required.args : nrow(args)
+    #type.index <- get_type_index(fn, nrow(args))
+    # Probably don't need to set this anymore
+    type.index <- active.type
+    if (!is.null(type.index) && length(type.index) > 0)
+      tree$type.index <- type.index
+  }
 
   # Replace existing function clauses if there is a signature match
-  idx <- has_variant(variants, args)
+  idx <- has_variant(variants, args, active.type)
   if (length(idx) > 0) variants[[idx]] <- tree
   else variants[[length(variants) + 1]] <- tree
   attr(fn,'variants') <- variants
@@ -570,21 +591,30 @@ get_variant <- function(fn, arg.length)
 }
 
 # Check whether this function already has the given variant
-has_variant <- function(variants, args)
+has_variant <- function(variants, args, active.type=NULL)
 {
   if (length(variants) == 0) return(variants)
 
   keys <- colnames(args)[! colnames(args) %in% 'default']
   fn <- function(x) {
-    if (nrow(variants[[x]]$args) != nrow(args)) return(NA)
-    ifelse(all(variants[[x]]$args[,keys] == args[,keys]), x, NA)
+    v <- variants[[x]]
+    if (!is.null(v$type.index) && !is.null(active.type) && v$type.index != active.type) return(NA)
+    var.len <- ifelse(is.null(v$args), 0, nrow(v$args))
+    arg.len <- ifelse(is.null(args), 0, nrow(args))
+    if (var.len != arg.len) return(NA)
+    if (var.len == 0) return (x)
+    args$pattern[is.na(args$pattern)] <- ".lambdar_NA" 
+    v$args$pattern[is.na(v$args$pattern)] <- ".lambdar_NA"
+    ifelse(all(v$args[,keys] == args[,keys]),x, NA)
   }
   out <- sapply(1:length(variants), fn)
   out[!is.na(out)]
 }
 
 # Adds type constraint to function
-# Type definitions are always additive
+# If an existing type constraint is encountered, then the active.type index
+# will be set to this type constraint. This has the same effect as adding a
+# new constraint.
 add_type <- function(fn.name, tree)
 {
   frames <- sys.frames()
@@ -597,10 +627,21 @@ add_type <- function(fn.name, tree)
   fn <- get(fn.name, where)
   types <- attr(fn,'types')
 
-  args <- tree$args
-  tree$accepts <- length(args$default[is.na(args$default)]) : nrow(args)
-  types[[length(types) + 1]] <- tree
+  if (is.null(tree$args))
+    tree$accepts <- 0
+  else {
+    args <- tree$args
+    tree$accepts <- length(args$default[is.na(args$default)]) : nrow(args)
+  }
+  f <- function(x) {
+    ifelse(types[[x]]$signature == tree$signature, x, NA)
+  }
+  out <- ifelse(length(types) > 0, sapply(1:length(types), f), NA)
+  out <- out[!is.na(out)]
+  idx <- ifelse(length(out) == 0, length(types) + 1, out[1])
+  types[[idx]] <- tree
   attr(fn,'types') <- types
+  attr(fn,'active.type') <- idx
 
   assign(fn.name, fn, where)
   invisible()

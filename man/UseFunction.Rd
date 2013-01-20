@@ -31,16 +31,16 @@ NewObject(type.name, ...)
 # trivial nature, most of these examples can be implemented more concisely
 # using built-in R features.
 
+
+reciprocal(x) \%::\% numeric : numeric
 reciprocal(x) \%when\% {
-  is.numeric(x)
   x != 0
 } \%as\% {
   1 / x
 }
 
-reciprocal(x) \%when\% {
-  is.character(x)
-} \%as\% {
+reciprocal(x) \%::\% character : numeric
+reciprocal(x) \%as\% {
   reciprocal(as.numeric(x))
 }
 
