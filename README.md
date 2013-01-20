@@ -146,6 +146,39 @@ or even
 fib(n) %::% Integer : numeric
 ```
 
+NOTE: For objects of type function, due to the precedence rules of the parser,
+you cannot specify 'function' in a type constraint. Instead use 'Function'.
+
+```R
+# Do this
+make.gen(n) %::% numeric : Function
+
+# Don't do this
+make.gen(n) %::% numeric : function
+
+```
+
+Type Variables
+--------------
+Type constraints are useful, but too specific of a constraint can destroy the
+polymorphism of a function. To preserve this while still retaining some
+type safety you can use a type variable. With type variables the actual type
+is not checked. Instead it is the relationship between types that are checked.
+
+```R
+fib(n) %::% a : a
+fib(0) %as% 1
+fib(1) %as% 1
+fib(n) %as% { fib(n-1) + fib(n-2) }
+
+```
+
+In this type constraint, both the input and output types must match.
+
+Note that the only characters valid for a type variable are the lowercase
+letters (i.e. a-z). If you need more than this for a single function definition,
+you've got other problems.
+
 
 One Shot
 ========
@@ -180,7 +213,8 @@ fib(x)
 
 The `seal` command in the first example prevents new statements from being
 added to an existing function definition. Instead new definitions reset the
-function.
+function. Typically you don't need this function as lambda.r will auto-replace
+function definitions that have the same signature.
 
 Sugar Coating
 =============
@@ -280,8 +314,42 @@ definitions.
 lm.D9 <- regress(data=data, weight ~ group)
 ```
 
-Sealing Definitions
+Auto Replace and Sealing Definitions
 -------------------
+As of version 1.1.0, lambda.r can detect a duplicate function signature and
+update an existing definition. This means development is more efficient 
+since you can re-source files and the existing definitions will update as you
+expect. This process is compatible with multi-part function definitions and
+type constraints. Do note that when using type constraints, only functions
+associated with the active type constraint can be auto replaced. The reason is
+that there can be two identical function signatures and lambda.r really has
+no way of knowing which one you mean. Hence, you have to tell lambda.r via
+the type constraint.
+
+
+For example take this simple reciprocal function. It has two three clauses
+and two type constraints. There is an explicit bug in the body of the second
+variant. Note that the signatures for variants 2 and 3 are
+identical and the only thing that distinguishes them are ther type constraints.
+
+```R
+reciprocal(n) %::% numeric : numeric
+reciprocal(0) %as% stop("Reciprocal of 0 is undefined")
+reciprocal(n) %as% { 2/n }
+
+reciprocal(n) %::% character : numeric
+reciprocal(n) %as% { reciprocal(as.numeric(n)) }
+
+```
+
+To change the definition of the second function variant, you must re-declare
+the first type constraint.
+
+```R
+reciprocal(n) %::% numeric : numeric
+reciprocal(n) %as% { 1/n }
+```
+
 Lambda.R has no way of knowing whether a function definition is complete or not.
 Explicitly telling lambda.r will ensure that any new function definitions will
 reset the function as opposed to append another definition.
@@ -369,10 +437,10 @@ New
 + Handle function types in type declarations
 + Support type variables
 + Auto-replace function definitions with a matching signature (no need for seal)
++ Handle 0 argument functions
 
 Future
 ======
-+ Handle 0 argument functions
 + Handle default arguments that execute a function
 + > log.debug("foo")
 Error in UseFunction("log.appender", ...) : 

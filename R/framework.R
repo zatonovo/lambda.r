@@ -563,15 +563,13 @@ add_variant <- function(fn.name, tree)
       tree$accepts <- c(required.args : nrow(args) - 1, Inf)
     else
       tree$accepts <- required.args : nrow(args)
-    #type.index <- get_type_index(fn, nrow(args))
-    # Probably don't need to set this anymore
-    type.index <- active.type
+    type.index <- get_type_index(fn, nrow(args), active.type)
     if (!is.null(type.index) && length(type.index) > 0)
       tree$type.index <- type.index
   }
 
   # Replace existing function clauses if there is a signature match
-  idx <- has_variant(variants, args, active.type)
+  idx <- has_variant(variants, args, tree$guard, active.type)
   if (length(idx) > 0) variants[[idx]] <- tree
   else variants[[length(variants) + 1]] <- tree
   attr(fn,'variants') <- variants
@@ -591,7 +589,7 @@ get_variant <- function(fn, arg.length)
 }
 
 # Check whether this function already has the given variant
-has_variant <- function(variants, args, active.type=NULL)
+has_variant <- function(variants, args, guard=NULL, active.type=NULL)
 {
   if (length(variants) == 0) return(variants)
 
@@ -603,6 +601,11 @@ has_variant <- function(variants, args, active.type=NULL)
     arg.len <- ifelse(is.null(args), 0, nrow(args))
     if (var.len != arg.len) return(NA)
     if (var.len == 0) return (x)
+    if (!is.null(v$guard) || !is.null(guard)) {
+      if (!is.null(v$guard) && is.null(guard)) return(NA)
+      if (is.null(v$guard) && !is.null(guard)) return(NA)
+      if (!all(deparse(v$guard) == deparse(guard)) ) return(NA)
+    }
     args$pattern[is.na(args$pattern)] <- ".lambdar_NA" 
     v$args$pattern[is.na(v$args$pattern)] <- ".lambdar_NA"
     ifelse(all(v$args[,keys] == args[,keys]),x, NA)
@@ -658,10 +661,13 @@ get_type <- function(fn, idx)
 }
 
 # Get the index for the most recent type declaration for the given arg.length
-get_type_index <- function(fn, arg.length)
+get_type_index <- function(fn, arg.length, active.type)
 {
   raw <- attr(fn,'types')
   if (length(raw) < 1) return(NULL)
+  if (!is.null(active.type) &&
+      !is.null(raw[[active.type]]$args) &&
+      nrow(raw[[active.type]]$args) == arg.length) return(active.type)
   
   match.fn <- function(x)
     any(arg.length >= raw[[x]]$accepts & arg.length <= raw[[x]]$accepts)

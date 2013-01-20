@@ -3,6 +3,7 @@ test.type_variable_1 <- function() {
   fib(0) %as% 1
   fib(1) %as% 1
   fib(n) %as% { fib(n-1) + fib(n-2) }
+  seal(fib)
 
   #act <- tryCatch(f(2,3), error=function(x) 'error')
   #checkEquals(act, 'error')

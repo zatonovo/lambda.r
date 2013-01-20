@@ -21,6 +21,8 @@ test.optional_arguments_2 <- function() {
     if (x < 273) { TRUE }
     else { FALSE }
   }
+  seal(Temperature)
+  seal(freezing)
 
   ctemp <- Temperature(20)
   checkTrue(! freezing(ctemp))
