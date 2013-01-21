@@ -1,4 +1,3 @@
-require(parser)
 
 # f(a,b) %::% A : B : C
 '%::%' <- function(signature, types)
