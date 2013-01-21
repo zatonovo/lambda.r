@@ -2,7 +2,7 @@
 # f(a,b) %::% A : B : C
 '%::%' <- function(signature, types)
 {
-  options(keep.source=TRUE)
+  keep.source <- options(keep.source=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   t.expr <- paste(deparse(substitute(types)), collapse="\n")
   text <- paste(s.expr,t.expr, sep=" %::% ")
@@ -20,6 +20,7 @@
   tree$signature <- paste(s.expr,"%::%",t.expr, sep=' ')
 
   add_type(name, tree)
+  options(keep.source=keep.source)
   invisible()
 }
 
@@ -29,7 +30,7 @@
 # f(a,b) %as% { a + b }
 '%as%' <- function(signature, body)
 {
-  options(keep.source=TRUE)
+  keep.source <- options(keep.source=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   b.expr <- paste(deparse(substitute(body)), collapse="\n")
   text <- paste(s.expr,b.expr, sep=" %as% ")
@@ -55,6 +56,7 @@
   tree$body <- b.expr
 
   add_variant(name, tree)
+  options(keep.source=keep.source)
   invisible()
 }
 
