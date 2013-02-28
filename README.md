@@ -432,8 +432,18 @@ lm.D9 <- regress(data=data, formula=weight ~ group, NULL)
 
 Don't do this, please. It's bad style.
 
-New 
-===
+What's New
+==========
+
+Version 1.1.1
+-------------
++ Support Function in every type position (only supported for return type)
++ Auto-replacing a function with 0 arguments fails
++ Fix type inheritance
++ Functions that return non-scalar values work as default values on arguments
+
+Version 1.1.0
+-------------
 + Handle function types in type declarations
 + Support type variables
 + Auto-replace function definitions with a matching signature (no need for seal)
@@ -441,18 +451,17 @@ New
 
 Future
 ======
++ Support debug.lr in functions defined in packages (currently locked)
 + Handle default arguments that execute a function
-+ > log.debug("foo")
-Error in UseFunction("log.appender", ...) : 
-  Expected 'numeric' as return type but found 'function' for 'log.appender(ROOT)
-+ Think about supporting namespaces
-+ Support NULL and Invisible return types
-+ Support take, drop, cycle
-+ Support partial function application
 + Guard parsing fails on sum(pay[1], spend[1], save[1]) == 1 (probably comma)
 + Guard parsing fails on length(grep('\\.R$',config.file)) > 0
 + Support *apply and lambda expressions in guard statements
-+ Support debugging functions in packages (e.g. debug.lr(futile.any::anynames))
++ Support defining operators
++ Lock functions by default (check when next function is different name). Use
+  public() as way to indicate function can be globally modified
++ Think about supporting namespaces
++ Support take, drop, cycle
++ Support partial function application
 + Support more pattern matching (like empty lists)
 + Check for side effects
 + Support tail recursion

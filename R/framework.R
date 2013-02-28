@@ -104,8 +104,6 @@ UseFunction <- function(fn.name, ...)
   if (!is.null(full.type))
   {
     return.type <- return_type(full.type, full.args)
-    # Use Function as a proxy for function
-    return.type <- gsub('\\bFunction\\b','function',return.type, perl=TRUE)
     if (return.type == '.lambda.r_UNIQUE')
     {
       act <- paste(class(result), collapse=', ')
@@ -139,19 +137,20 @@ fill_args <- function(raw.args, tree)
   {
     if (length(raw.args) == length(defaults)) return(raw.args)
     ds <- defaults[(length(raw.args)+1):length(defaults)]
-    vs <- sapply(ds, function(x) eval(parse(text=x)))
+    vs <- lapply(ds, function(x) eval(parse(text=x)))
     names(vs) <- NULL
     c(raw.args, vs)
   }
   else
   {
-    names(defaults) <- tree$args$token
+    ds <- lapply(defaults, function(x) x)
+    names(ds) <- tree$args$token
     shim <- tree$args$token[1:length(raw.args)]
     names(raw.args)[names(raw.args) == ""] <- shim[names(raw.args) == '']
-    defaults[names(raw.args)] <- raw.args
-    gaps <- ! names(defaults) %in% names(raw.args)
-    defaults[gaps] <- sapply(defaults[gaps], function(x) eval(parse(text=x)))
-    defaults
+    ds[names(raw.args)] <- raw.args
+    gaps <- ! names(ds) %in% names(raw.args)
+    ds[gaps] <- lapply(ds[gaps], function(x) eval(parse(text=x)))
+    ds
   }
 }
 
@@ -186,7 +185,7 @@ check_types <- function(raw.types, raw.args)
     declared.types <- sapply(1:(length(declared.types)-1), fn)
   }
 
-  if (!is.null(ncol(arg.types)) && ncol(arg.types) > 1)
+  if (!is.null(ncol(arg.types)) && ncol(arg.types) > 0)
     all(sapply(idx, function(x) declared.types[x] %in% arg.types[,x]))
   else
     all(sapply(idx, function(x) declared.types[x] %in% arg.types[[x]]))
@@ -223,6 +222,8 @@ return_type <- function(raw.types, raw.args)
     if (is.null(ret.type)) ret.type <- ".lambda.r_UNIQUE"
   }
   ret.type
+  # Use Function as a proxy for function
+  gsub('\\bFunction\\b','function',ret.type, perl=TRUE)
 }
 
 .SIMPLE_TYPES <- c('numeric','character','POSIXt','POSIXct','Date')
@@ -552,6 +553,7 @@ add_variant <- function(fn.name, tree)
   fn <- get(fn.name, where)
   variants <- attr(fn,'variants')
   active.type <- attr(fn,'active.type')
+  args <- NULL
 
   if (is.null(tree$args))
     tree$accepts <- 0
@@ -638,7 +640,12 @@ add_type <- function(fn.name, tree)
   f <- function(x) {
     ifelse(types[[x]]$signature == tree$signature, x, NA)
   }
-  out <- ifelse(length(types) > 0, sapply(1:length(types), f), NA)
+  if (length(types) > 0)
+  {
+    out <- sapply(1:length(types), f)
+  }
+  else
+    out <- NA
   out <- out[!is.na(out)]
   idx <- ifelse(length(out) == 0, length(types) + 1, out[1])
   types[[idx]] <- tree
@@ -657,6 +664,10 @@ get_type <- function(fn, idx)
   raw <- attr(fn,'types')
   if (length(raw) < 1) return(NULL)
   match <- raw[[idx]]
+  # Use Function as a proxy for function
+  char.type <- match$types$text
+  match$types$text <- gsub('\\bFunction\\b','function',char.type, perl=TRUE)
+  match
 }
 
 # Get the index for the most recent type declaration for the given arg.length

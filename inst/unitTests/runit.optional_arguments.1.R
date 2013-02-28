@@ -1,4 +1,6 @@
-test.optional_arguments_1 <- function() {
+# vim: set filetype=R
+
+test.optional_arguments_1a <- function() {
   Prices(series, asset.class='equity', periodicity='daily') %as% {
     series@asset.class <- asset.class
     series@periodicity <- periodicity
@@ -36,4 +38,50 @@ test.optional_arguments_1 <- function() {
   ps <- Prices(abs(rnorm(50)))
   checkEquals(length(returns(ps)), length(ps) - 1)
 
+}
+
+
+test.optional_arguments_1b <- function() {
+  Temperature(x, system='metric', units='celsius') %as% {
+    x@system <- system
+    x@units <- units
+    x
+  }
+
+  freezing(x) %::% Temperature : logical
+  freezing(x) %when% {
+    x@system == 'metric'
+    x@units == 'celsius'
+  } %as% {
+    if (x < 0) { TRUE }
+    else { FALSE }
+  }
+
+  freezing(x) %when% {
+    x@system == 'metric'
+    x@units == 'kelvin'
+  } %as% {
+    if (x < 273) { TRUE }
+    else { FALSE }
+  }
+  seal(Temperature)
+  seal(freezing)
+
+  ctemp <- Temperature(20)
+  checkTrue(! freezing(ctemp))
+
+  ktemp <- Temperature(20, units='kelvin')
+  checkTrue(freezing(ktemp))
+}
+
+
+test.optional_arguments_1c <- function() {
+  avg(x, fun=mean) %as% { fun(x) }
+
+  a <- 1:4
+  a.mean <- avg(a)
+  checkEquals(a.mean, 2.5)
+
+  a.med <- avg(a, median)
+  checkEquals(a.med, 2.5)
 }

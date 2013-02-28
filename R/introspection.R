@@ -7,7 +7,7 @@ describe(fn, idx) %when% {
 } %as% {
   variants <- attr(fn,'variants')
   types <- attr(fn,'types')
-  if (is.null(variants)) stop("Nothing to describe")
+  if (length(variants) < 1) stop("Nothing to describe")
   if (idx > length(variants)) stop("Invalid index specified")
   variants[[idx]]$def
 }
@@ -19,6 +19,9 @@ debug.lr <- function(x)
   name <- deparse(substitute(x))
   attr(x,'debug') <- TRUE
   assign(name,x,inherits=TRUE)
+  # Need to think about how to do this efficiently for package functions
+  #debugs <- c(getOption("lambda.r.debug"), name)
+  #options(lambda.r.debug=debugs)
 }
 
 undebug.lr <- function(x)
@@ -26,13 +29,18 @@ undebug.lr <- function(x)
   name <- deparse(substitute(x))
   attr(x,'debug') <- FALSE
   assign(name,x,inherits=TRUE)
+  # Need to think about how to do this efficiently for package functions
+  #debugs <- c(getOption("lambda.r.debug"), name)
+  #debug <- debugs[debugs != name]
+  #options(lambda.r.debug=debugs)
 }
 
 print.lambdar.fun <- function(x, ...)
 {
   variants <- attr(x,'variants')
   types <- attr(x,'types')
-  if (is.null(variants)) stop("Lambda.R function incorrectly defined")
+  if (is.null(variants)) stop("Oops: lambda.r function incorrectly defined")
+  if (length(variants) < 1) stop("Function has no clauses")
   cat("<function>\n")
   fn <- function(idx)
   {
@@ -50,7 +58,7 @@ print.lambdar.type <- function(x, ...)
 {
   variants <- attr(x,'variants')
   types <- attr(x,'types')
-  if (is.null(variants)) stop("Lambda.R type constructor incorrectly defined")
+  if (is.null(variants)) stop("Oops: lambda.R type constructor incorrectly defined")
   cat("<type constructor>\n")
   fn <- function(idx)
   {
