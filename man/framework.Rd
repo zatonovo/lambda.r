@@ -1,6 +1,7 @@
 \name{\%as\%}
 \alias{\%as\%}
 \alias{\%::\%}
+\alias{EMPTY}
 \alias{seal}
 \title{Define functions and type constructors in lambda.r}
 \description{The \%as\% function is used in place of the assignment operator for

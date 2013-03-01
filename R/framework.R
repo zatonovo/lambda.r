@@ -1,3 +1,4 @@
+EMPTY <- 'EMPTY'
 
 # f(a,b) %::% A : B : C
 '%::%' <- function(signature, types)
@@ -301,6 +302,10 @@ parse_fun <- function(it, raw=NULL)
         # Check for 0 argument function
         if (is.null(token) && is.null(pattern)) break
         # Otherwise...
+        if (!is.null(token) && token == EMPTY) {
+          token <- NULL
+          pattern <- EMPTY
+        }
         if (is.null(token)) token <- paste('.lambda',arg.idx,sep='_')
         if (is.null(pattern)) pattern <- NA
         #else pattern <- strip_quotes(paste(pattern, collapse=' '))
@@ -329,6 +334,10 @@ parse_fun <- function(it, raw=NULL)
       # Close current node
       if (line.token == "','")
       {
+        if (!is.null(token) && token == EMPTY) {
+          token <- NULL
+          pattern <- EMPTY
+        }
         if (is.null(token)) token <- paste('.lambda',arg.idx,sep='_')
         if (is.null(pattern)) pattern <- NA
         #else pattern <- strip_quotes(paste(pattern, collapse=' '))
@@ -395,7 +404,17 @@ guard_fn <- function(raw.args, tree)
   if (any(!is.na(raw.args$pattern)))
   {
     patterns <- raw.args[!is.na(raw.args$pattern),]
-    lines <- paste(patterns$token,'==',patterns$pattern, sep=' ')
+    f <- function(x) {
+      if (patterns$pattern[x] == 'NULL')
+        paste("is.null(", patterns$token[x],")", sep='')
+      else if (patterns$pattern[x] == 'NA')
+        paste("is.na(", patterns$token[x],")", sep='')
+      else if (patterns$pattern[x] == 'EMPTY')
+        paste("length(", patterns$token[x],") == 0", sep='')
+      else 
+        paste(patterns$token[x],'==',patterns$pattern[x], sep=' ')
+    }
+    lines <- sapply(1:nrow(patterns), f)
   }
 
   # Add explicit guards

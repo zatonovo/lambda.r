@@ -441,6 +441,8 @@ Version 1.1.1
 + Auto-replacing a function with 0 arguments fails
 + Fix type inheritance
 + Functions that return non-scalar values work as default values on arguments
++ Support pattern matching on NULL and NA
++ Support pattern matching on special symbol EMPTY
 
 Version 1.1.0
 -------------
