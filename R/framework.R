@@ -17,7 +17,7 @@ EMPTY <- 'EMPTY'
   name <- args_expr$token[1]
   if (nrow(args_expr) > 1)
     tree$args <- args_expr[2:nrow(args_expr),]
-  tree$types <- parse_types(it, tree$args, t.expr)
+  tree$types <- parse_types(it, tree$args, text)
   tree$signature <- paste(s.expr,"%::%",t.expr, sep=' ')
 
   add_type(name, tree)
@@ -525,7 +525,7 @@ body_fn <- function(raw.args, tree)
   eval(parse(text=fn.string))
 }
 
-parse_types <- function(it, args, expr)
+parse_types <- function(it, args, sig)
 {
   types <- NULL
   while (!is.na(line <- it()) && line$token.desc != "SPECIAL") next
@@ -534,17 +534,17 @@ parse_types <- function(it, args, expr)
     while (!is.na(line <- it()) && TRUE)
     {
       if (line$token.desc %in% c("'{'", "'}'", "'('", "')'"))
-        stop("Invalid symbol '",line$text,"'in function definition")
+        stop("Invalid symbol '",line$text,"'in definition of ",sig)
       if (line$token.desc != "SYMBOL") next
       types <- rbind(types, line)
     }
   }
   if (is.null(args)) {
     if (nrow(types) != 1)
-      stop("Incorrect number of parameters in type declaration")
+      stop("Incorrect number of parameters in type declaration for ",sig)
   } else {
     if (nrow(args) != nrow(types) - 1)
-      stop("Incorrect number of parameters in type declaration")
+      stop("Incorrect number of parameters in type declaration for ",sig)
   }
 
   types[,c('line1','token.desc','text')]
