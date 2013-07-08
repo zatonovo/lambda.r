@@ -64,3 +64,15 @@ test.dispatching_1d <- function() {
   a <- c(1,2,5,6,3,2,1,3)
   checkEquals(abs_max(a), 6)
 }
+
+
+test.different_names <- function() {
+  A(a) %as% { list(a=a) }
+  A(b) %as% { list(b=b) }
+  seal(A)
+
+  checkEquals(A(5)$a, 5)
+  checkEquals(A(a=5)$a, 5)
+  checkEquals(A(b=5)$b, 5)
+}
+

@@ -76,12 +76,6 @@ NewObject <- function(type.name, ...)
 
 UseFunction <- function(fn.name, ...)
 {
-  #cat("Objects visible in UseFunction:\n")
-  #print(sapply(sys.frames(), function(x) ls(x)))
-  #cat("Call stack for UseFunction:\n")
-  #sapply(sys.calls(), function(x) print(x))
-  #cat("\n")
-  #fn.name <- deparse(substitute(fn))
   fn <- get(fn.name, inherits=TRUE)
   result <- NULL
   raw.args <- list(...)
@@ -92,6 +86,7 @@ UseFunction <- function(fn.name, ...)
   for (v in vs)
   {
     full.args <- fill_args(raw.args, v)
+    if (is.null(full.args)) next
     full.type <- get_type(fn,v$type.index)
     if (!check_types(full.type, full.args)) next
     if (is.null(v$guard)) { matched.fn <- v$def; break }
@@ -129,10 +124,15 @@ UseFunction <- function(fn.name, ...)
 }
 
 
+has_ellipsis <- function(tree) {
+  '...' %in% tree$args$token
+}
+
 fill_args <- function(raw.args, tree)
 {
   if (is.null(tree$args)) return(list())
 
+  has.ellipsis <- has_ellipsis(tree)
   tree$args <- tree$args[tree$args$token != '...',]
   defaults <- tree$args$default
 
@@ -147,6 +147,8 @@ fill_args <- function(raw.args, tree)
   }
   else
   {
+    if (! has.ellipsis && any(! names(raw.args) %in% c("",tree$args$token))) 
+      return(NULL)
     ds <- lapply(defaults, function(x) x)
     names(ds) <- tree$args$token
     shim <- tree$args$token[1:length(raw.args)]
