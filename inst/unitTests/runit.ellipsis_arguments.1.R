@@ -14,6 +14,10 @@ visualize(x, ...) %when% {
 seal(Prices)
 seal(visualize)
 
+dummy(x, ...) %as% { list(...) }
+seal(dummy)
+
+
 test.ellipsis_arguments_1 <- function() {
   ps <- Prices(rnorm(50), 'equity', 'daily')
   visualize(ps, main='Prices', xlab='time')
@@ -26,4 +30,12 @@ test.ellipsis_arguments_1 <- function() {
   visualize(scatter)
 
   visualize(scatter, main='random')
+}
+
+test.ellipsis_unnamed_arguments <- function() {
+  act <- dummy(1,2)
+  checkEquals(act, list(2))
+
+  act <- dummy(1,2,3,4)
+  checkEquals(act, list(2,3,4))
 }

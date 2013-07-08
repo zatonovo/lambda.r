@@ -94,7 +94,7 @@ UseFunction <- function(fn.name, ...)
     if (!check_types(full.type, full.args)) next
     if (is.null(v$guard)) { matched.fn <- v$def; break }
     gout <- do.call(v$guard, full.args)
-    if (length(gout) > 0 && gout) { matched.fn <- v$def; break }
+    if (!is.na(gout) && length(gout) > 0 && gout) { matched.fn <- v$def; break }
   }
   if (is.null(matched.fn))
     stop(use_error(.ERR_USE_FUNCTION,fn.name,raw.args))
@@ -108,8 +108,9 @@ UseFunction <- function(fn.name, ...)
     if (return.type == '.lambda.r_UNIQUE')
     {
       act <- paste(class(result), collapse=', ')
-      if (class(result) %in% sapply(raw.args, class)) {
-        msg <- sprintf("Expected unique return type but found '%s' for",act)
+      first <- class(result)[1]
+      if (first %in% sapply(raw.args, class)) {
+        msg <- sprintf("Expected unique return type but found '%s' for",first)
         stop(use_error(msg,fn.name,raw.args))
       }
     }
@@ -136,7 +137,7 @@ fill_args <- function(raw.args, tree)
   # This is for unnamed arguments
   if (is.null(names(raw.args)))
   {
-    if (length(raw.args) == length(defaults)) return(raw.args)
+    if (length(raw.args) >= length(defaults)) return(raw.args)
     ds <- defaults[(length(raw.args)+1):length(defaults)]
     vs <- lapply(ds, function(x) eval(parse(text=x)))
     names(vs) <- NULL
