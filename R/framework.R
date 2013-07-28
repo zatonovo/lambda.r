@@ -178,7 +178,7 @@ check_types <- function(raw.types, raw.args)
       if (! the.type %in% letters) return(the.type)
 
       if (is.null(type.map[[the.type]])) {
-        if (arg.types[[x]] %in% type.map)
+        if (any(arg.types[[x]] %in% type.map))
           type.map[[the.type]] <<- paste("!",arg.types[[x]],sep='')
         # Add the new type if it doesn't exist
         else
@@ -192,9 +192,9 @@ check_types <- function(raw.types, raw.args)
   }
 
   if (!is.null(ncol(arg.types)) && ncol(arg.types) > 0)
-    all(sapply(idx, function(x) declared.types[x] %in% arg.types[,x]))
+    all(sapply(idx, function(x) any(declared.types[[x]] %in% arg.types[,x])))
   else
-    all(sapply(idx, function(x) declared.types[x] %in% arg.types[[x]]))
+    all(sapply(idx, function(x) any(declared.types[[x]] %in% arg.types[[x]])))
 }
 
 # Get the return type of a function declaration. This is aware of type
