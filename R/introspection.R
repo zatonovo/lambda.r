@@ -14,6 +14,8 @@ describe(fn, idx) %when% {
 
 seal(describe)
 
+# TODO: Use options to manage this. Looks like environments hash names.
+# lambda.r.debug <- environment()
 debug.lr <- function(x)
 {
   name <- deparse(substitute(x))
