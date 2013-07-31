@@ -1,5 +1,13 @@
 EMPTY <- 'EMPTY'
 
+#' Check if name is bound to a non-lambda.r object
+is.bound <- function(name) {
+  if (! exists(name, inherits=TRUE)) return(FALSE)
+
+  o <- get(name, inherits=TRUE)
+  ! any(c('lambdar.fun','lambdar.type') %in% class(o))
+}
+
 # f(a,b) %::% A : B : C
 '%::%' <- function(signature, types)
 {
@@ -15,6 +23,9 @@ EMPTY <- 'EMPTY'
   tree <- list(args=NULL)
   args_expr <- parse_fun(it)
   name <- args_expr$token[1]
+  if (is.bound(name))
+    stop("Function name is already bound to non lambda.r object")
+
   if (nrow(args_expr) > 1)
     tree$args <- args_expr[2:nrow(args_expr),]
   tree$types <- parse_types(it, tree$args, text)
@@ -43,6 +54,9 @@ EMPTY <- 'EMPTY'
   tree <- list(args=NULL)
   args_expr <- parse_fun(it)
   name <- args_expr$token[1]
+  if (is.bound(name))
+    stop("Function name is already bound to non lambda.r object")
+
   if (nrow(args_expr) > 1)
     tree$args <- args_expr[2:nrow(args_expr),]
   guard_expr <- parse_guard(it)
@@ -55,6 +69,7 @@ EMPTY <- 'EMPTY'
   tree$def <- body_fn(tree$args, body_expr)
   tree$signature <- s.expr
   tree$body <- b.expr
+  tree$ellipsis <- idx_ellipsis(tree)
 
   add_variant(name, tree)
   options(keep.source=os$keep.source)
@@ -74,19 +89,55 @@ NewObject <- function(type.name, ...)
   result
 }
 
+# Some timings
+# Baseline:
+# g <- function(x) x
+# system.time(for (i in 1:10000) g(i) )
+#  user  system elapsed
+# 0.004   0.000   0.003
+#
+# S3:
+# h <- function(x, ...) UseMethod("h")
+# h.default <- function(x, ...) x
+# system.time(for (i in 1:10000) h(i) )
+#  user  system elapsed
+# 0.035   0.001   0.035
+#
+# Lambda.r:
+# f(x) %as% x
+# system.time(for (i in 1:10000) { fn <- get('f', inherits=TRUE) })
+#  user  system elapsed
+# 0.017   0.000   0.018
+#
+# system.time(for (i in 1:10000) f(i) )
+#  user  system elapsed
+# 1.580   0.005   1.590
+# 0.622   0.005   0.628
+# 0.443   0.003   0.447
+# 0.407   0.000   0.408
+# 0.391   0.001   0.392
+# 0.384   0.001   0.386
 UseFunction <- function(fn.name, ...)
 {
+  # u:0.021 s:0.003
   fn <- get(fn.name, inherits=TRUE)
   result <- NULL
+  # u:0.007 s:0.002
   raw.args <- list(...)
+  # u:0.305 s:0.010
+  # u:0.096 s:0.002
   vs <- get_variant(fn,length(raw.args))
   if (is.null(vs) || length(vs) < 1)
     stop(use_error(.ERR_NO_MATCH,fn.name,raw.args))
   matched.fn <- NULL
   for (v in vs)
   {
-    full.args <- fill_args(raw.args, v)
+    # u:1.007 s:0.006
+    # u:0.106 s:0.001
+    # u:0.068 s:0.001
+    full.args <- fill_args(raw.args, v$args, v$ellipsis)
     if (is.null(full.args)) next
+    # u:0.019 s:0.003
     full.type <- get_type(fn,v$type.index)
     if (!check_types(full.type, full.args)) next
     if (is.null(v$guard)) { matched.fn <- v$def; break }
@@ -96,7 +147,8 @@ UseFunction <- function(fn.name, ...)
   if (is.null(matched.fn))
     stop(use_error(.ERR_USE_FUNCTION,fn.name,raw.args))
 
-  if (attr(fn,'debug')) debug(matched.fn)
+  # u:0.058 s:0.006
+  if (is.debug(fn.name)) debug(matched.fn)
   result <- do.call(matched.fn, full.args)
 
   if (!is.null(full.type))
@@ -124,21 +176,21 @@ UseFunction <- function(fn.name, ...)
 }
 
 
-has_ellipsis <- function(tree) {
-  '...' %in% tree$args$token
+idx_ellipsis <- function(tree) {
+  which(tree$args$token == '...')
 }
 
-fill_args <- function(raw.args, tree)
+fill_args <- function(raw.args, args, ellipsis)
 {
-  if (is.null(tree$args)) return(list())
+  if (is.null(args)) return(list())
 
-  has.ellipsis <- has_ellipsis(tree)
-  tree$args <- tree$args[tree$args$token != '...',]
-  defaults <- tree$args$default
+  if (length(ellipsis) > 0)
+    args <- args[-ellipsis,]
 
   # This is for unnamed arguments
   if (is.null(names(raw.args)))
   {
+    defaults <- args$default
     if (length(raw.args) >= length(defaults)) return(raw.args)
     ds <- defaults[(length(raw.args)+1):length(defaults)]
     vs <- lapply(ds, function(x) eval(parse(text=x)))
@@ -147,11 +199,12 @@ fill_args <- function(raw.args, tree)
   }
   else
   {
-    if (! has.ellipsis && any(! names(raw.args) %in% c("",tree$args$token))) 
+    if (length(ellipsis) == 0 &&
+        any(! names(raw.args) %in% c("",args$token))) 
       return(NULL)
-    ds <- lapply(defaults, function(x) x)
-    names(ds) <- tree$args$token
-    shim <- tree$args$token[1:length(raw.args)]
+    ds <- lapply(args$default, function(x) x)
+    names(ds) <- args$token
+    shim <- args$token[1:length(raw.args)]
     names(raw.args)[names(raw.args) == ""] <- shim[names(raw.args) == '']
     ds[names(raw.args)] <- raw.args
     gaps <- ! names(ds) %in% names(raw.args)
@@ -577,14 +630,15 @@ add_variant <- function(fn.name, tree)
   args <- NULL
 
   if (is.null(tree$args))
-    tree$accepts <- 0
+    tree$accepts <- c(0,0)
   else {
     args <- tree$args
     required.args <- length(args$default[is.na(args$default)])
     if ('...' %in% tree$args$token)
-      tree$accepts <- c(required.args : nrow(args) - 1, Inf)
+      tree$accepts <- c(required.args-1, Inf)
+      #tree$accepts <- c(required.args : nrow(args) - 1, Inf)
     else
-      tree$accepts <- required.args : nrow(args)
+      tree$accepts <- c(required.args, nrow(args))
     type.index <- get_type_index(fn, nrow(args), active.type)
     if (!is.null(type.index) && length(type.index) > 0)
       tree$type.index <- type.index
@@ -603,10 +657,11 @@ add_variant <- function(fn.name, tree)
 
 get_variant <- function(fn, arg.length)
 {
+  # u:0.007 s:0.000
   raw <- attr(fn,'variants')
-  match.fn <- function(x)
-    arg.length >= min(x$accepts) & arg.length <= max(x$accepts)
-  matches <- sapply(raw, match.fn)
+  matches <- rep(NA,length(raw))
+  for (j in 1:length(raw))
+    matches[j] <- arg.length >= raw[[j]]$accepts[1] && arg.length <= raw[[j]]$accepts[2]
   raw[matches]
 }
 
@@ -653,10 +708,10 @@ add_type <- function(fn.name, tree)
   types <- attr(fn,'types')
 
   if (is.null(tree$args))
-    tree$accepts <- 0
+    tree$accepts <- c(0,0)
   else {
     args <- tree$args
-    tree$accepts <- length(args$default[is.na(args$default)]) : nrow(args)
+    tree$accepts <- c(length(args$default[is.na(args$default)]), nrow(args))
   }
   f <- function(x) {
     ifelse(types[[x]]$signature == tree$signature, x, NA)
