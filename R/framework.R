@@ -70,6 +70,8 @@ is.bound <- function(name) {
   tree$signature <- s.expr
   tree$body <- b.expr
   tree$ellipsis <- idx_ellipsis(tree)
+  tree$fill.tokens <- clean_tokens(tree)
+  tree$fill.defaults <- clean_defaults(tree)
 
   add_variant(name, tree)
   options(keep.source=os$keep.source)
@@ -121,6 +123,7 @@ NewObject <- function(type.fn,type.name, ...)
 # 0.384   0.001   0.386
 # 0.372   0.003   0.376
 # 0.347   0.001   0.347
+# 0.305   0.000   0.305
 UseFunction <- function(fn,fn.name, ...)
 {
   result <- NULL
@@ -140,7 +143,7 @@ UseFunction <- function(fn,fn.name, ...)
     # u:1.007 s:0.006
     # u:0.106 s:0.001
     # u:0.068 s:0.001
-    full.args <- fill_args(raw.args, v$args, v$ellipsis)
+    full.args <- fill_args(raw.args, v$fill.tokens, v$fill.defaults, v$ellipsis)
     if (is.null(full.args)) next
     # u:0.019 s:0.003
     full.type <- get_type(fn,v$type.index)
@@ -185,15 +188,28 @@ idx_ellipsis <- function(tree) {
   which(tree$args$token == '...')
 }
 
-fill_args <- function(raw.args, args, ellipsis)
+clean_tokens <- function(tree) {
+  if (length(tree$ellipsis) == 0)
+    tree$args$token
+  else
+    tree$args$token[-tree$ellipsis]
+}
+
+clean_defaults <- function(tree) {
+  if (length(tree$ellipsis) == 0)
+    tree$args$default
+  else
+    tree$args$default[-tree$ellipsis]
+}
+
+#fill_args <- function(raw.args, args, ellipsis)
+fill_args <- function(raw.args, tokens, defaults, ellipsis)
 {
   if (is.null(args)) return(list())
-  if (length(ellipsis) > 0) args <- args[-ellipsis,]
 
   # This is for unnamed arguments
   if (is.null(names(raw.args)))
   {
-    defaults <- args$default
     if (length(raw.args) >= length(defaults)) return(raw.args)
     ds <- defaults[(length(raw.args)+1):length(defaults)]
     vs <- lapply(ds, function(x) eval(parse(text=x)))
@@ -202,12 +218,11 @@ fill_args <- function(raw.args, args, ellipsis)
   }
   else
   {
-    if (length(ellipsis) == 0 &&
-        any(! names(raw.args) %in% c("",args$token))) 
+    if (length(ellipsis) == 0 && any(! names(raw.args) %in% c("",tokens))) 
       return(NULL)
-    ds <- lapply(args$default, function(x) x)
-    names(ds) <- args$token
-    shim <- args$token[1:length(raw.args)]
+    ds <- lapply(defaults, function(x) x)
+    names(ds) <- tokens
+    shim <- tokens[1:length(raw.args)]
     names(raw.args)[names(raw.args) == ""] <- shim[names(raw.args) == '']
     ds[names(raw.args)] <- raw.args
     gaps <- ! names(ds) %in% names(raw.args)
