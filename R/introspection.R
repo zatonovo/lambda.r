@@ -44,9 +44,9 @@ undebug.lr <- function(x)
   invisible()
 }
 
-is.debug <- function(name) {
+is.debug <- function(fn.name) {
   os <- getOption('lambdar.debug')
-  name %in% names(os)
+  fn.name %in% names(os)
 }
 
 which.debug <- function() {

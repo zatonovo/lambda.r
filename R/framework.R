@@ -80,9 +80,11 @@ is.bound <- function(name) {
 .ERR_NO_MATCH <- "No match for function"
 .ERR_USE_FUNCTION <- "No valid function for"
 .ERR_ENSURE_FAILED <- "Assertion '%s' failed for args = %s and result = %s"
-NewObject <- function(type.name, ...)
+#NewObject <- function(type.name, ...)
+NewObject <- function(type.fn,type.name, ...)
 {
-  result <- UseFunction(type.name, ...)
+  result <- UseFunction(type.fn,type.name, ...)
+
   type <- gsub('"','', type.name)
   if (!type %in% class(result))
     class(result) <- c(type, class(result))
@@ -117,18 +119,21 @@ NewObject <- function(type.name, ...)
 # 0.407   0.000   0.408
 # 0.391   0.001   0.392
 # 0.384   0.001   0.386
-UseFunction <- function(fn.name, ...)
+# 0.372   0.003   0.376
+# 0.347   0.001   0.347
+UseFunction <- function(fn,fn.name, ...)
 {
-  # u:0.021 s:0.003
-  fn <- get(fn.name, inherits=TRUE)
   result <- NULL
   # u:0.007 s:0.002
   raw.args <- list(...)
   # u:0.305 s:0.010
   # u:0.096 s:0.002
+  # u:0.088 s:0.004
+  # u:0.082 s:0.000
   vs <- get_variant(fn,length(raw.args))
   if (is.null(vs) || length(vs) < 1)
     stop(use_error(.ERR_NO_MATCH,fn.name,raw.args))
+
   matched.fn <- NULL
   for (v in vs)
   {
@@ -183,9 +188,7 @@ idx_ellipsis <- function(tree) {
 fill_args <- function(raw.args, args, ellipsis)
 {
   if (is.null(args)) return(list())
-
-  if (length(ellipsis) > 0)
-    args <- args[-ellipsis,]
+  if (length(ellipsis) > 0) args <- args[-ellipsis,]
 
   # This is for unnamed arguments
   if (is.null(names(raw.args)))
@@ -659,9 +662,12 @@ get_variant <- function(fn, arg.length)
 {
   # u:0.007 s:0.000
   raw <- attr(fn,'variants')
-  matches <- rep(NA,length(raw))
-  for (j in 1:length(raw))
-    matches[j] <- arg.length >= raw[[j]]$accepts[1] && arg.length <= raw[[j]]$accepts[2]
+  len <- length(raw)
+  matches <- vector(length=len)
+  for (j in 1:len) {
+    accepts <- raw[[j]]$accepts
+    matches[j] <- arg.length >= accepts[1] && arg.length <= accepts[2]
+  }
   raw[matches]
 }
 
@@ -786,17 +792,16 @@ setup_parent <- function(parent, where)
 init_function <- function(name)
 {
   if (is.type(name)) 
-    pattern <- 'function(...) NewObject("%s",...)'
+    pattern <- 'function(...) NewObject(%s,"%s",...)'
   else
-    pattern <- 'function(...) UseFunction("%s",...)'
-  fn <- eval(parse(text=sprintf(pattern,name)))
+    pattern <- 'function(...) UseFunction(%s,"%s",...)'
+  fn <- eval(parse(text=sprintf(pattern,name,name)))
   if (is.type(name))
     attr(fn, 'class') <- c('lambdar.type',attr(fn,'class'))
   else
     attr(fn, 'class') <- c('lambdar.fun',attr(fn,'class'))
   attr(fn, 'variants') <- list()
   attr(fn, 'types') <- list()
-  attr(fn, 'debug') <- FALSE
   fn
 }
 
