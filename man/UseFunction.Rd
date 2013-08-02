@@ -5,12 +5,14 @@
 \description{UseFunction manages the dispatching for multipart functions in 
 lambda.r. This is used internally by lambda.r.}
 \usage{
-UseFunction(fn.name, ...)
-NewObject(type.name, ...)
+UseFunction(fn, fn.name, ...)
+NewObject(type.fn, type.name, ...)
 }
 \arguments{
+  \item{fn}{The function reference that is being applied}
   \item{fn.name}{The name of a function that uses functional dispatching. This
     is just the name of the function being defined}
+  \item{type.fn}{The function representing the type constructor}
   \item{type.name}{The name of the type}
   \item{\dots}{The arguments that are passed to dispatched functions }
 }

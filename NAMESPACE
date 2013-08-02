@@ -15,6 +15,3 @@ export("%isa%")
 export("%hasa%")
 export("%hasall%")
 
-export('get_variant')
-export('fill_args')
-export('clean_tokens')

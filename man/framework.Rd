@@ -4,9 +4,10 @@
 \alias{EMPTY}
 \alias{seal}
 \title{Define functions and type constructors in lambda.r}
-\description{The \%as\% function is used in place of the assignment operator for
-defining functions and type constructors with lambda.r. With the \%as\% operator
-the full suite of functional features are available.}
+\description{The \%as\% function is used in place of the 
+assignment operator for defining functions and type constructors 
+with lambda.r. The \%as\% operator is the gateway to a
+full suite of advanced functional programming features.}
 \usage{
 signature \%::\% types
 signature \%as\% body

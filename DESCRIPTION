@@ -2,7 +2,7 @@ Package: lambda.r
 Type: Package
 Title: Functional programming in R
 Version: 1.1.3
-Date: 2013-08-01
+Date: 2013-08-02
 Depends: R (>= 3.0.0)
 Suggests: RUnit
 Author: Brian Lee Yung Rowe
