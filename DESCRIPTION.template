@@ -1,6 +1,6 @@
 Package: lambda.r
 Type: Package
-Title: Functional programming in R
+Title: Modeling Data with Functional Programming
 Version: {version}
 Date: {date}
 Depends: R (>= 3.0.0)
