@@ -124,6 +124,7 @@ NewObject <- function(type.fn,type.name, ...)
 # 0.372   0.003   0.376
 # 0.347   0.001   0.347
 # 0.305   0.000   0.305
+# 0.238   0.000   0.238
 UseFunction <- function(fn,fn.name, ...)
 {
   result <- NULL
@@ -155,8 +156,6 @@ UseFunction <- function(fn,fn.name, ...)
   if (is.null(matched.fn))
     stop(use_error(.ERR_USE_FUNCTION,fn.name,raw.args))
 
-  # u:0.058 s:0.006
-  if (is.debug(fn.name)) debug(matched.fn)
   result <- do.call(matched.fn, full.args)
 
   if (!is.null(full.type))

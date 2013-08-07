@@ -27,6 +27,9 @@ debug.lr <- function(x)
 
   if (! any(c('lambdar.fun','lambdar.type') %in% class(x)))
     return(debug(x))
+
+  variants <- attr(x,'variants')
+  sapply(variants, function(v) debug(v$def))
   invisible()
 }
 
@@ -41,6 +44,9 @@ undebug.lr <- function(x)
 
   if (! any(c('lambdar.fun','lambdar.type') %in% class(x)))
     return(undebug(x))
+
+  variants <- attr(x,'variants')
+  sapply(variants, function(v) undebug(v$def))
   invisible()
 }
 
