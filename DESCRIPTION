@@ -2,7 +2,7 @@ Package: lambda.r
 Type: Package
 Title: Modeling Data with Functional Programming
 Version: 1.1.4
-Date: 2013-08-04
+Date: 2013-08-09
 Depends: R (>= 3.0.0)
 Suggests: RUnit
 Author: Brian Lee Yung Rowe

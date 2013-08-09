@@ -639,6 +639,10 @@ add_variant <- function(fn.name, tree)
     my.call <- sys.calls()[[length(frames)-2]]
     where <- target_env(my.call, length(frames))
   }
+  #cat("NOTE: Environment for",fn.name,"is\n", sep=' ')
+  env <- capture.output(str(as.environment(where), give.attr=FALSE))
+  attr(tree$def,'topenv') <- env
+  attr(tree$def,'name') <- fn.name
 
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)
@@ -886,6 +890,7 @@ target_env <- function(head.call, frame.length)
   lambda.r_temp_env <- tryCatch(get('envir', envir=eval.frame),
     error=function(e) { cat("WARNING: Falling back to top.frame\n"); top.frame})
 
+  #cat("NOTE: Using lambda.r_temp_env for",parsed.call[1,'token'],"\n", sep=' ')
   lambda.r_temp_env
 }
 
