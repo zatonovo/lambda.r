@@ -641,8 +641,13 @@ add_variant <- function(fn.name, tree)
   }
   #cat("NOTE: Environment for",fn.name,"is\n", sep=' ')
   env <- capture.output(str(as.environment(where), give.attr=FALSE))
-  attr(tree$def,'topenv') <- env
-  attr(tree$def,'name') <- fn.name
+  if (! is.null(tree$def)) {
+    attr(tree$def,'topenv') <- env
+    attr(tree$def,'name') <- fn.name
+  } else {
+    cat("NOTE: Empty body definition encountered for",tree$signature,"\n")
+  }
+  
 
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)

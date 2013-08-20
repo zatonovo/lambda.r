@@ -24,7 +24,7 @@ and convenient syntax that reduces type clutter.
 Package: \tab lambda.r\cr
 Type: \tab Package\cr
 Version: \tab 1.1.4\cr
-Date: \tab 2013-08-09\cr
+Date: \tab 2013-08-15\cr
 License: \tab LGPL-3\cr
 LazyLoad: \tab yes\cr
 }
