@@ -201,7 +201,6 @@ clean_defaults <- function(tree) {
     tree$args$default[-tree$ellipsis]
 }
 
-#fill_args <- function(raw.args, args, ellipsis)
 fill_args <- function(raw.args, tokens, defaults, ellipsis)
 {
   if (is.null(args)) return(list())
@@ -459,7 +458,8 @@ parse_guard <- function(it)
     {
       if (line$token %in% c("'{'"))
         stop("Invalid symbol '",line$text,"'in function definition")
-      if (line$token %in% c('expr',"','")) next
+      #if (line$token %in% c('expr',"','")) next
+      if (line$token %in% c('expr')) next
       guards <- rbind(guards, line)
     }
     #while (!is.na(line <- it()) && line$token != "SPECIAL") next
