@@ -57,23 +57,28 @@ is.bound <- function(name) {
   if (is.bound(name))
     stop("Function name is already bound to non lambda.r object")
 
+  where <- get_function_env()
+  #cat(sprintf("Function env for %s is\n", name))
+  #print(where)
+  #cat("\n")
+
   if (nrow(args_expr) > 1)
     tree$args <- args_expr[2:nrow(args_expr),]
   guard_expr <- parse_guard(it)
   guard_expr <- transform_attrs(guard_expr)
   if (!is.null(tree$args))
-    tree$guard <- guard_fn(tree$args, guard_expr)
+    tree$guard <- guard_fn(tree$args, guard_expr, where)
 
   body_expr <- parse_body(it)
   body_expr <- transform_attrs(body_expr)
-  tree$def <- body_fn(tree$args, body_expr)
+  tree$def <- body_fn(tree$args, body_expr, where)
   tree$signature <- s.expr
   tree$body <- b.expr
   tree$ellipsis <- idx_ellipsis(tree)
   tree$fill.tokens <- clean_tokens(tree)
   tree$fill.defaults <- clean_defaults(tree)
 
-  add_variant(name, tree)
+  add_variant(name, tree, where)
   options(keep.source=os$keep.source)
   invisible()
 }
@@ -235,30 +240,35 @@ check_types <- function(raw.types, raw.args)
   if (is.null(raw.types)) return(TRUE)
   declared.types <- raw.types$types$text
   if (nrow(raw.types$types) - 1 != length(raw.args)) return(FALSE)
-  arg.types <- sapply(raw.args, function(x) class(x))
+
+  arg.fn <- function(x) {
+    cl <- class(x)
+    if ('integer' %in% cl) cl <- c(cl, 'numeric')
+    cl
+  }
+  arg.types <- sapply(raw.args, arg.fn)
 
   idx <- 1:length(raw.args)
 
   # Check for type variables (can only be a-z)
   type.map <- list()
-  if (any(declared.types %in% letters)) {
-    fn <- function(x) {
-      the.type <- declared.types[x]
-      if (! the.type %in% letters) return(the.type)
+  fn <- function(x) {
+    the.type <- declared.types[x]
+    if (the.type == '.') return(arg.types[[x]])
+    if (! the.type %in% letters) return(the.type)
 
-      if (is.null(type.map[[the.type]])) {
-        if (any(arg.types[[x]] %in% type.map))
-          type.map[[the.type]] <<- paste("!",arg.types[[x]],sep='')
-        # Add the new type if it doesn't exist
-        else
-          type.map[[the.type]] <<- arg.types[[x]]
-      }
-
-      # Now use the map to fill in the declared type
-      type.map[[the.type]]
+    if (is.null(type.map[[the.type]])) {
+      if (any(arg.types[[x]] %in% type.map))
+        type.map[[the.type]] <<- paste("!",arg.types[[x]],sep='')
+      # Add the new type if it doesn't exist
+      else
+        type.map[[the.type]] <<- arg.types[[x]]
     }
-    declared.types <- sapply(1:(length(declared.types)-1), fn)
+
+    # Now use the map to fill in the declared type
+    type.map[[the.type]]
   }
+  declared.types <- sapply(1:(length(declared.types)-1), fn)
 
   if (!is.null(ncol(arg.types)) && ncol(arg.types) > 0)
     all(sapply(idx, function(x) any(declared.types[[x]] %in% arg.types[,x])))
@@ -469,7 +479,7 @@ parse_guard <- function(it)
   guards[,c('line1','token','text')]
 }
 
-guard_fn <- function(raw.args, tree)
+guard_fn <- function(raw.args, tree, where)
 {
   lines <- NULL
   # Add any pattern matches
@@ -502,7 +512,7 @@ guard_fn <- function(raw.args, tree)
   body <- paste(lines, collapse=' & ')
   arg.string <- paste(raw.args$token, collapse=',')
   fn.string <- sprintf("function(%s) { %s }", arg.string, body)
-  eval(parse(text=fn.string))
+  eval(parse(text=fn.string), where)
 }
 
 # A parse transform to change object@attribute to attr(object,'attribute')
@@ -574,7 +584,7 @@ parse_body <- function(it)
 }
 
 
-body_fn <- function(raw.args, tree)
+body_fn <- function(raw.args, tree, where)
 {
   if (tree$token[1] == "'{'") tree <- tree[2:(nrow(tree)-1), ]
   lines <- NULL
@@ -594,7 +604,7 @@ body_fn <- function(raw.args, tree)
   else
     arg.string <- paste(raw.args$token, collapse=',')
   fn.string <- sprintf("function(%s) { %s }", arg.string, body)
-  eval(parse(text=fn.string))
+  eval(parse(text=fn.string), where)
 }
 
 parse_types <- function(it, args, sig)
@@ -627,23 +637,11 @@ from_root_env <- function(frames)
   length(frames) < 3
 }
 
-add_variant <- function(fn.name, tree)
+add_variant <- function(fn.name, tree, where)
 {
-  frames <- sys.frames()
-
-  if (from_root_env(frames)) {
-    print("Assuming in root environment")
-    where <- topenv(parent.frame(2))
-  } else {
-    print("Getting target environment from call stack")
-    #if ('lambda.r_temp_env' %in% search())
-    #  detach('lambda.r_temp_env', character.only=TRUE)
-    my.call <- sys.calls()[[length(frames)-2]]
-    where <- target_env(my.call, length(frames))
-  }
   #cat("NOTE: Environment for",fn.name,"is\n", sep=' ')
-  print(sprintf("NOTE: Environment for %s is",fn.name))
-  print(where)
+  #print(sprintf("NOTE: Environment for %s is",fn.name))
+  #print(where)
   env <- capture.output(str(as.environment(where), give.attr=FALSE))
   if (! is.null(tree$def)) {
     attr(tree$def,'topenv') <- env
@@ -651,11 +649,13 @@ add_variant <- function(fn.name, tree)
   } else {
     cat("NOTE: Empty body definition encountered for",tree$signature,"\n")
   }
-  
 
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)
-  environment(fn) <- where
+  #cat(sprintf("The parent.env(%s) is\n", fn.name))
+  #print(parent.env(environment(fn)))
+  #cat("\n")
+
   variants <- attr(fn,'variants')
   active.type <- attr(fn,'active.type')
   args <- NULL
@@ -806,30 +806,32 @@ setup_parent <- function(parent, where)
     if ((!is.null(is.final) && is.final == TRUE) ||
         (! any(c('lambdar.fun','lambdar.type') %in% class(parent.def))) )
     {
-      parent.def <- init_function(parent)
+      parent.def <- init_function(parent, where)
       assign(parent, parent.def, where)
     }
   }
   else
   {
-    parent.def <- init_function(parent)
+    parent.def <- init_function(parent, where)
     assign(parent, parent.def, where)
   }
 }
 
-init_function <- function(name)
+init_function <- function(name, where)
 {
   if (is.type(name)) 
     pattern <- 'function(...) NewObject(%s,"%s",...)'
   else
     pattern <- 'function(...) UseFunction(%s,"%s",...)'
-  fn <- eval(parse(text=sprintf(pattern,name,name)))
+  fn <- eval(parse(text=sprintf(pattern,name,name)), where)
   if (is.type(name))
     attr(fn, 'class') <- c('lambdar.type',attr(fn,'class'))
   else
     attr(fn, 'class') <- c('lambdar.fun',attr(fn,'class'))
   attr(fn, 'variants') <- list()
   attr(fn, 'types') <- list()
+  #print(sprintf("Parent.env(%s) is", name))
+  #print(parent.env(environment(fn)))
   fn
 }
 
@@ -882,6 +884,23 @@ really_get <- function(x)
   get(x, frames[frame.idx[length(frame.idx)]])
 }
 
+get_function_env <- function() {
+  frames <- sys.frames()
+
+  if (from_root_env(frames)) {
+    #print("Assuming in root environment")
+    where <- topenv(parent.frame(2))
+  } else {
+    #print("Getting target environment from call stack")
+    #if ('lambda.r_temp_env' %in% search())
+    #  detach('lambda.r_temp_env', character.only=TRUE)
+    my.call <- sys.calls()[[length(frames)-2]]
+    where <- target_env(my.call, length(frames))
+  }
+  where
+}
+
+
 # Get the target env for the function definition. Normally this would be
 # just traversing the frame stack, but we need to add special logic to
 # handle eval() calls with an explicit environment.
@@ -898,7 +917,7 @@ target_env <- function(head.call, frame.length)
 
   eval.frame <- sys.frame(frame.length-stack.depth)
   lambda.r_temp_env <- tryCatch(get('envir', envir=eval.frame),
-    error=function(e) { cat("WARNING: Falling back to top.frame\n"); top.frame})
+    error=function(e) stop("Unable to extract envir in eval frame\n"))
 
   #cat("NOTE: Using lambda.r_temp_env for",parsed.call[1,'token'],"\n", sep=' ')
   lambda.r_temp_env
