@@ -631,15 +631,19 @@ add_variant <- function(fn.name, tree)
 {
   frames <- sys.frames()
 
-  if (from_root_env(frames)) where <- topenv(parent.frame(2))
-  else
-  {
+  if (from_root_env(frames)) {
+    print("Assuming in root environment")
+    where <- topenv(parent.frame(2))
+  } else {
+    print("Getting target environment from call stack")
     #if ('lambda.r_temp_env' %in% search())
     #  detach('lambda.r_temp_env', character.only=TRUE)
     my.call <- sys.calls()[[length(frames)-2]]
     where <- target_env(my.call, length(frames))
   }
   #cat("NOTE: Environment for",fn.name,"is\n", sep=' ')
+  print(sprintf("NOTE: Environment for %s is",fn.name))
+  print(where)
   env <- capture.output(str(as.environment(where), give.attr=FALSE))
   if (! is.null(tree$def)) {
     attr(tree$def,'topenv') <- env
@@ -651,6 +655,7 @@ add_variant <- function(fn.name, tree)
 
   setup_parent(fn.name, where)
   fn <- get(fn.name, where)
+  environment(fn) <- where
   variants <- attr(fn,'variants')
   active.type <- attr(fn,'active.type')
   args <- NULL
@@ -888,8 +893,8 @@ target_env <- function(head.call, frame.length)
 
   # 3 is a magic number based on the lambda.r call stack to this function
   stack.depth <- 3
-  top.frame <- topenv(parent.frame(stack.depth))
-  if (args$token[1] != 'eval') return(top.frame)
+  top.env <- topenv(parent.frame(stack.depth))
+  if (args$token[1] != 'eval') return(top.env)
 
   eval.frame <- sys.frame(frame.length-stack.depth)
   lambda.r_temp_env <- tryCatch(get('envir', envir=eval.frame),

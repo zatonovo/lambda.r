@@ -11,11 +11,9 @@ describe(fn, idx) %when% {
   if (idx > length(variants)) stop("Invalid index specified")
   variants[[idx]]$def
 }
-
 seal(describe)
 
-# TODO: Use options to manage this. Looks like environments hash names.
-# lambda.r.debug <- environment()
+
 debug.lr <- function(x)
 {
   name <- deparse(substitute(x))
@@ -33,6 +31,8 @@ debug.lr <- function(x)
   invisible()
 }
 
+# TODO: When sourcing a file, reset debugging for the given function.
+# This should happen in %as%
 undebug.lr <- function(x)
 {
   name <- deparse(substitute(x))
