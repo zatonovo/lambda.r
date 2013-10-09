@@ -2,6 +2,7 @@
 \alias{describe}
 \alias{debug.lr}
 \alias{undebug.lr}
+\alias{undebugall}
 \alias{is.debug}
 \alias{which.debug}
 \alias{print.lambdar.fun}

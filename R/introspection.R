@@ -31,11 +31,14 @@ debug.lr <- function(x)
   invisible()
 }
 
-# TODO: When sourcing a file, reset debugging for the given function.
-# This should happen in %as%
 undebug.lr <- function(x)
 {
-  name <- deparse(substitute(x))
+  if (is.function(x)) {
+    name <- deparse(substitute(x))
+  } else {
+    name <- x
+    x <- get(x, parent.frame(), inherits=TRUE)
+  }
   os <- getOption('lambdar.debug')
   if (is.null(os)) return(invisible())
 
@@ -47,6 +50,12 @@ undebug.lr <- function(x)
 
   variants <- attr(x,'variants')
   sapply(variants, function(v) undebug(v$def))
+  invisible()
+}
+
+#' Undebug all registered functions
+undebugall <- function() {
+  sapply(which.debug(), undebug.lr)
   invisible()
 }
 

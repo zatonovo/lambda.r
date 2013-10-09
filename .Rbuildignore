@@ -6,4 +6,3 @@
 ^LICENSE$
 ^tools$
 ^.travis.yml$
-\..*\.R$

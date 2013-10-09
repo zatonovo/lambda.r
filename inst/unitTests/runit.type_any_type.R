@@ -5,11 +5,10 @@ test.type_any_type_1 <- function() {
   fib(n) %as% { fib(n-1) + fib(n-2) }
   seal(fib)
 
-  #act <- tryCatch(f(2,3), error=function(x) 'error')
-  #checkEquals(act, 'error')
-  act <- fib(3)
-  checkEquals(act, 3)
-  checkEquals(act, 4)
+  act <- tryCatch(fib(3), error=function(x) 'error')
+  checkEquals(act, 'error')
+  #act <- fib(3)
+  #checkEquals(act, 3)
 }
 
 test.type_any_type_2 <- function() {

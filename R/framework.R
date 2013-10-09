@@ -166,19 +166,21 @@ UseFunction <- function(fn,fn.name, ...)
   if (!is.null(full.type))
   {
     return.type <- return_type(full.type, full.args)
-    if (return.type == '.lambda.r_UNIQUE')
-    {
-      act <- paste(class(result), collapse=', ')
-      first <- class(result)[1]
+    result.class <- class(result)
+    if ('integer' %in% result.class) result.class <- c(result.class, 'numeric')
+
+    if (return.type == '.') {
+      NULL
+    } else if (return.type == '.lambda.r_UNIQUE') {
+      act <- paste(result.class, collapse=', ')
+      first <- result.class[1]
       if (first %in% sapply(raw.args, class)) {
         msg <- sprintf("Expected unique return type but found '%s' for",first)
         stop(use_error(msg,fn.name,raw.args))
       }
-    }
-    else if (!return.type %in% class(result))
-    {
+    } else if (!return.type %in% result.class) {
       exp <- return.type
-      act <- paste(class(result), collapse=', ')
+      act <- paste(result.class, collapse=', ')
       msg <- sprintf("Expected '%s' as return type but found '%s' for",exp,act)
       stop(use_error(msg,fn.name,raw.args))
     }
@@ -206,19 +208,23 @@ clean_defaults <- function(tree) {
     tree$args$default[-tree$ellipsis]
 }
 
+# Fill raw.args with any default values for unspecified arguments
 fill_args <- function(raw.args, tokens, defaults, ellipsis)
 {
   if (is.null(args)) return(list())
 
-  # This is for unnamed arguments
+  # This is for unnamed arguments, which means default values
+  # can only be applied via positional inference
   if (is.null(names(raw.args)))
   {
     if (length(raw.args) >= length(defaults)) return(raw.args)
     ds <- defaults[(length(raw.args)+1):length(defaults)]
+    # TODO: Don't evaluate this here. Do it at execution time
     vs <- lapply(ds, function(x) eval(parse(text=x)))
     names(vs) <- NULL
     c(raw.args, vs)
   }
+  # If names exist, then arguments need to be aligned properly
   else
   {
     if (length(ellipsis) == 0 && any(! names(raw.args) %in% c("",tokens))) 
@@ -234,79 +240,104 @@ fill_args <- function(raw.args, tokens, defaults, ellipsis)
   }
 }
 
+has_ellipsis <- function(declared.types) {
+  any(sapply(declared.types, 
+    function(x) any(grep('...', x, fixed=TRUE) > 0)))
+}
+
+update_type_map <- function(type.map, the.type, arg.type) {
+  if (is.null(type.map[[the.type]])) {
+    if (any(arg.type %in% type.map))
+      # This forces a failure in the type check later on
+      type.map[[the.type]] <- paste("!",arg.type,sep='')
+    else
+      # Add the new type if it doesn't exist
+      type.map[[the.type]] <- arg.type
+  }
+  type.map
+}
+
+strip_ellipsis <- function(the.type) {
+  sub('...','',the.type, fixed=TRUE)
+}
+
+# Used internally to determine the declared type based on its
+# value and corresponding argument type.
+dereference_type <- function(declared.types, arg.types) {
+  type.map <- list()
+  len.delta <- length(arg.types) - length(declared.types) + 1
+
+  # Check for type variables (can only be a-z)
+  fn <- function(x) {
+    the.type <- declared.types[[x]]
+    if (the.type == '.')
+      return(arg.types[[x]])
+    else if (the.type == '...') 
+      return(arg.types[x + 0:len.delta])
+    else if (the.type %in% letters) {
+      type.map <<- update_type_map(type.map, the.type, arg.types[[x]])
+      return(type.map[[the.type]])
+    }
+    else if (any(grep('[a-z]\\.\\.\\.', the.type) > 0)) {
+      the.type <- strip_ellipsis(the.type)
+      type.map <<- update_type_map(type.map, the.type, arg.types[[x]])
+      return(rep(type.map[[the.type]], len.delta + 1))
+    }
+    else if (any(grep('[a-zA-Z0-9._]+\\.\\.\\.', the.type) > 0)) {
+      the.type <- strip_ellipsis(the.type)
+      return(rep(the.type, len.delta + 1))
+    }
+    # Default
+    the.type
+  }
+}
+
+
 # Validate arguments against types
 check_types <- function(raw.types, raw.args)
 {
   if (is.null(raw.types)) return(TRUE)
   declared.types <- raw.types$types$text
-  if (nrow(raw.types$types) - 1 != length(raw.args)) return(FALSE)
+  if (! has_ellipsis(declared.types) &&
+      nrow(raw.types$types) - 1 != length(raw.args)) return(FALSE)
 
   arg.fn <- function(x) {
     cl <- class(x)
     if ('integer' %in% cl) cl <- c(cl, 'numeric')
     cl
   }
-  arg.types <- sapply(raw.args, arg.fn)
+  arg.types <- lapply(raw.args, arg.fn)
+
+  fn <- dereference_type(declared.types, arg.types)
+  declared.types <- lapply(1:(length(declared.types)-1), fn)
+  declared.types <- unlist(declared.types, recursive=FALSE)
 
   idx <- 1:length(raw.args)
-
-  # Check for type variables (can only be a-z)
-  type.map <- list()
-  fn <- function(x) {
-    the.type <- declared.types[x]
-    if (the.type == '.') return(arg.types[[x]])
-    if (! the.type %in% letters) return(the.type)
-
-    if (is.null(type.map[[the.type]])) {
-      if (any(arg.types[[x]] %in% type.map))
-        type.map[[the.type]] <<- paste("!",arg.types[[x]],sep='')
-      # Add the new type if it doesn't exist
-      else
-        type.map[[the.type]] <<- arg.types[[x]]
-    }
-
-    # Now use the map to fill in the declared type
-    type.map[[the.type]]
-  }
-  declared.types <- sapply(1:(length(declared.types)-1), fn)
-
-  if (!is.null(ncol(arg.types)) && ncol(arg.types) > 0)
-    all(sapply(idx, function(x) any(declared.types[[x]] %in% arg.types[,x])))
-  else
-    all(sapply(idx, function(x) any(declared.types[[x]] %in% arg.types[[x]])))
+  all(sapply(idx, function(x) any(declared.types[[x]] %in% arg.types[[x]])))
 }
+
+
 
 # Get the return type of a function declaration. This is aware of type
 # variables.
+# TODO: Make this more efficient using information computed
+# by check_types.
 return_type <- function(raw.types, raw.args)
 {
   declared.types <- raw.types$types$text
-  if (nrow(raw.types$types) - 1 != length(raw.args)) return(MissingReturnType)
-  arg.types <- sapply(raw.args, function(x) class(x))
+  if (! has_ellipsis(declared.types) &&
+      nrow(raw.types$types) - 1 != length(raw.args)) return(MissingReturnType)
 
-  idx <- 1:length(raw.args)
+  arg.types <- lapply(raw.args, function(x) class(x))
 
   # Check for type variables (can only be a-z)
   ret.type <- declared.types[length(declared.types)]
-  type.map <- list()
   if (ret.type %in% letters) {
-    fn <- function(x) {
-      the.type <- declared.types[x]
-      if (! the.type %in% letters) return(the.type)
-
-      if (is.null(type.map[[the.type]])) {
-        if (arg.types[[x]] %in% type.map)
-          type.map[[the.type]] <<- paste("!",arg.types[[x]],sep='')
-        # Add the new type if it doesn't exist
-        else
-          type.map[[the.type]] <<- arg.types[[x]]
-      }
-    }
+    fn <- dereference_type(declared.types, arg.types)
     sapply(1:(length(declared.types)-1), fn)
-    ret.type <- type.map[[ret.type]]
+    ret.type <- fn(length(declared.types))
     if (is.null(ret.type)) ret.type <- ".lambda.r_UNIQUE"
   }
-  ret.type
   # Use Function as a proxy for function
   gsub('\\bFunction\\b','function',ret.type, perl=TRUE)
 }
@@ -675,6 +706,7 @@ add_variant <- function(fn.name, tree, where)
       tree$type.index <- type.index
   }
 
+  attr(tree$def, 'name') <- fn.name
   # Replace existing function clauses if there is a signature match
   idx <- has_variant(variants, args, tree$guard, active.type)
   if (length(idx) > 0) variants[[idx]] <- tree
@@ -683,6 +715,7 @@ add_variant <- function(fn.name, tree, where)
 
   assign(fn.name, fn, where)
   #if (! from_root_env(frames)) attach(where, name='lambda.r_temp_env')
+  .sync_debug(fn.name)
   invisible()
 }
 
@@ -968,5 +1001,14 @@ parse_eval <- function(it, raw=NULL)
     token <- c(token, line$text)
   }
   out
+}
+
+.sync_debug <- function(fn.name) {
+  os <- getOption('lambdar.debug')
+  if (is.null(os)) return(invisible())
+
+  os[[fn.name]] <- NULL
+  options(lambdar.debug=os)
+  invisible()
 }
 
