@@ -208,10 +208,52 @@ clean_defaults <- function(tree) {
     tree$args$default[-tree$ellipsis]
 }
 
-# Fill raw.args with any default values for unspecified arguments
-fill_args <- function(raw.args, tokens, defaults, ellipsis)
+# TODO: Set proper evaluation environment
+fill_args <- function(params, tokens, defaults, idx.ellipsis)
 {
-  if (is.null(args)) return(list())
+  args <- list()
+  if (is.null(params)) return(args)
+
+  # Initialize arguments with default values
+  idx <- 1:(length(tokens) + length(idx.ellipsis))
+  idx.concrete <- idx[-idx.ellipsis]
+  names(idx.concrete) <- tokens
+  # TODO: Only apply to unset values
+  args[idx.concrete] <- lapply(defaults, function(x) eval(parse(text=x)))
+  names(args)[idx.concrete] <- tokens
+
+  # Populate named arguments
+  param.names <- names(params)
+  named.args <- param.names[param.names %in% tokens]
+  args[named.args] <- params[named.args]
+
+  # Catalog named arguments
+  # TODO: Fix incompatibility between idx.required and idx.named.
+  # idx.required is associated with args, while idx.named is
+  # associated with params.
+  idx.named <- 1:length(params)
+  names(idx.named) <- names(params)
+  idx.named <- idx.named[named.args]
+
+  idx.required <- idx.concrete[is.na(defaults)]
+
+  # Fill the ellipsis with the remainder
+  args[[idx.ellipsis]] <- params[-c(idx.required, idx.named)]
+
+  # If some names, then remove those from the list
+  if (! is.null(param.names)) {
+    idx.unnamed <- (1:length(param.names))[!nchar(param.names)]
+    idx.required <- idx.required[idx.required %in% idx.unnamed]
+  }
+  args[idx.required] <- params[idx.required]
+
+  unlist(args, recursive=FALSE)
+}
+
+# Fill raw.args with any default values for unspecified arguments
+fill_args.old <- function(raw.args, tokens, defaults, ellipsis)
+{
+  if (is.null(raw.args)) return(list())
 
   # This is for unnamed arguments, which means default values
   # can only be applied via positional inference
