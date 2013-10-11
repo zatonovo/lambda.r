@@ -179,6 +179,64 @@ Note that the only characters valid for a type variable are the lowercase
 letters (i.e. a-z). If you need more than this for a single function definition,
 you've got other problems.
 
+The Ellipsis Type
+-----------------
+The ellipsis can be inserted in a type constraint. This has interesting
+properties as the ellipsis represents a set of arguments. To specify
+that input values should be captured by the ellipsis, use ```...``` within
+the type constraint. For example, suppose you want a function that
+multiplies the sum of a set of numbers. The ellipsis type tells
+lambda.r to bind the types associated with the ellipsis type.
+
+```R
+sumprod(x, ..., na.rm=TRUE) %::% numeric : ... : logical : numeric
+sumprod(x, ..., na.rm=TRUE) %as% { x * sum(..., na.rm=na.rm) }
+
+> sumprod(4, 1,2,3,4)
+[1] 40
+```
+
+Alternatively, suppose you want all the values bound to the ellipsis
+to be of a certain type. Then you can append ```...``` to a concrete
+type.
+
+```R
+sumprod(x, ..., na.rm=TRUE) %::% numeric : numeric... : logical : numeric
+sumprod(x, ..., na.rm=TRUE) %as% { x * sum(..., na.rm=na.rm) }
+
+> sumprod(4, 1,2,3,4)
+[1] 40
+> sumprod(4, 1,2,3,4,'a')
+Error in UseFunction(sumprod, "sumprod", ...) :
+  No valid function for 'sumprod(4,1,2,3,4,a)'
+```
+
+If you want to preserve polymorphism but still constrain values bound
+to the ellipsis to a single type, you can use a type variable. Note that
+the same rules for type variables apply. Hence a type variable represents
+a type that is not specified elsewhere.
+
+```R
+sumprod(x, ..., na.rm=TRUE) %::% a : a... : logical : a
+sumprod(x, ..., na.rm=TRUE) %as% { x * sum(..., na.rm=na.rm) }
+
+> sumprod(4, 1,2,3,4)
+[1] 40
+> sumprod(4, 1,2,3,4,'a')
+Error in UseFunction(sumprod, "sumprod", ...) :
+  No valid function for 'sumprod(4,1,2,3,4,a)'
+```
+
+The Don't-Care Type
+-------------------
+Sometimes it is useful to ignore a specific type in a constraint. Since
+we are not inferring all types in a program, this is an acceptable
+action. Using the ```.``` within a type constraint tells lambda.r to not
+check the type for the given argument.
+
+For example in ```R f(x, y) %::% . : numeric : numeric```, the type of 
+```x``` will not be checked.
+
 
 One Shot
 ========

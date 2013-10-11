@@ -24,7 +24,7 @@ and convenient syntax that reduces type clutter.
 Package: \tab lambda.r\cr
 Type: \tab Package\cr
 Version: \tab 1.1.4\cr
-Date: \tab 2013-08-21\cr
+Date: \tab 2013-10-11\cr
 License: \tab LGPL-3\cr
 LazyLoad: \tab yes\cr
 }
@@ -56,8 +56,7 @@ and can be called like any other function.
 Functions that have a more complicated body require braces.
 \preformatted{f(x) \%as\% { 2 * x }
 
-g(x, y) \%as\%
-{
+g(x, y) \%as\% {
   z <- x + y
   sqrt(z)
 }
@@ -180,6 +179,60 @@ the arguments, although it would have been just as valid to use
 
 Type constraints and type variables can be applied to any lambda.r
 function, including type constructors.
+}
+
+\subsection{The ellipsis type}{
+The ellipsis can be inserted in a type constraint. This has interesting
+properties as the ellipsis represents a set of arguments. To specify
+that input values should be captured by the ellipsis, use \code{...} within
+the type constraint. For example, suppose you want a function that
+multiplies the sum of a set of numbers. The ellipsis type tells
+lambda.r to bind the types associated with the ellipsis type.
+
+\preformatted{sumprod(x, ..., na.rm=TRUE) \%::\% numeric : ... : logical : numeric
+sumprod(x, ..., na.rm=TRUE) \%as\% { x * sum(..., na.rm=na.rm) }
+
+> sumprod(4, 1,2,3,4)
+[1] 40}
+
+Alternatively, suppose you want all the values bound to the ellipsis
+to be of a certain type. Then you can append ```...``` to a concrete
+type.
+
+\preformatted{sumprod(x, ..., na.rm=TRUE) \%::\% numeric : numeric... : logical : numeric
+sumprod(x, ..., na.rm=TRUE) \%as\% { x * sum(..., na.rm=na.rm) }
+
+> sumprod(4, 1,2,3,4)
+[1] 40
+> sumprod(4, 1,2,3,4,'a')
+Error in UseFunction(sumprod, "sumprod", ...) :
+  No valid function for 'sumprod(4,1,2,3,4,a)' }
+
+If you want to preserve polymorphism but still constrain values bound
+to the ellipsis to a single type, you can use a type variable. Note that
+the same rules for type variables apply. Hence a type variable represents
+a type that is not specified elsewhere.
+
+\preformatted{sumprod(x, ..., na.rm=TRUE) \%::\% a : a... : logical : a
+sumprod(x, ..., na.rm=TRUE) \%as\% { x * sum(..., na.rm=na.rm) }
+
+> sumprod(4, 1,2,3,4)
+[1] 40
+> sumprod(4, 1,2,3,4,'a')
+Error in UseFunction(sumprod, "sumprod", ...) :
+  No valid function for 'sumprod(4,1,2,3,4,a)' }
+
+}
+
+\subsection{The don't-care type}{
+Sometimes it is useful to ignore a specific type in a constraint. Since
+we are not inferring all types in a program, this is an acceptable
+action. Using the ```.``` within a type constraint tells lambda.r to not
+check the type for the given argument.
+
+For example in \code{f(x, y) \%::\% . : numeric : numeric}, the type of 
+\code{x} will not be checked.
+
 }
 
 }
