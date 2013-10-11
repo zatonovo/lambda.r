@@ -291,9 +291,12 @@ fill_args <- function(params, tokens, defaults, idx.ellipsis)
 }
 
 
+# Return the index of the ellipsis argument or an empty vector otherwise
 has_ellipsis <- function(declared.types) {
-  any(sapply(declared.types, 
-    function(x) any(grep('...', x, fixed=TRUE) > 0)))
+  idx <- 1:length(declared.types)
+  val <- sapply(declared.types, 
+    function(x) any(grep('...', x, fixed=TRUE) > 0))
+  idx[val]
 }
 
 update_type_map <- function(type.map, the.type, arg.type) {
@@ -349,7 +352,8 @@ check_types <- function(raw.types, raw.args)
 {
   if (is.null(raw.types)) return(TRUE)
   declared.types <- raw.types$types$text
-  if (! has_ellipsis(declared.types) &&
+  idx.ellipsis <- has_ellipsis(declared.types)
+  if (length(idx.ellipsis) == 0 &&
       nrow(raw.types$types) - 1 != length(raw.args)) return(FALSE)
 
   arg.fn <- function(x) {
@@ -361,7 +365,14 @@ check_types <- function(raw.types, raw.args)
 
   fn <- dereference_type(declared.types, arg.types)
   declared.types <- lapply(1:(length(declared.types)-1), fn)
-  declared.types <- unlist(declared.types, recursive=FALSE)
+  if (length(idx.ellipsis) > 0) {
+    idx.declared <- 1:length(declared.types)
+    declared.types <- c(
+      declared.types[idx.declared[idx.declared < idx.ellipsis]],
+      unlist(declared.types[idx.ellipsis], recursive=FALSE),
+      declared.types[idx.declared[idx.declared > idx.ellipsis]]
+    )
+  }
 
   idx <- 1:length(raw.args)
   all(sapply(idx, function(x) any(declared.types[[x]] %in% arg.types[[x]])))
@@ -909,9 +920,9 @@ init_function <- function(name, where)
     pattern <- 'function(...) UseFunction(%s,"%s",...)'
   fn <- eval(parse(text=sprintf(pattern,name,name)), where)
   if (is.type(name))
-    attr(fn, 'class') <- c('lambdar.type',attr(fn,'class'))
+    attr(fn, 'class') <- c('lambdar.type', 'function')
   else
-    attr(fn, 'class') <- c('lambdar.fun',attr(fn,'class'))
+    attr(fn, 'class') <- c('lambdar.fun', 'function')
   attr(fn, 'variants') <- list()
   attr(fn, 'types') <- list()
   #print(sprintf("Parent.env(%s) is", name))
