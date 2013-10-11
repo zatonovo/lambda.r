@@ -17,13 +17,11 @@ test.type_fill_args_1 <- function() {
   act <- mysum(y=3, x=2, 1, 2, 3)
   checkEquals(act, -6)
 
-  # FAIL
-  #act <- mysum(y=3, 1, 2, 3, x=2)
-  #checkEquals(act, -6)
+  act <- mysum(y=3, 1, 2, 3, x=2)
+  checkEquals(act, -6)
 
-  # FAIL
-  #act <- mysum(2, 1, 2, 3, y=3)
-  #checkEquals(act, -6)
+  act <- mysum(2, 1, 2, 3, y=3)
+  checkEquals(act, -6)
 }
 
 test.type_fill_args_2 <- function() {
@@ -39,9 +37,8 @@ test.type_fill_args_2 <- function() {
   act <- mysum(y=2, x=1, 1, 1, 2, 3)
   checkEquals(act, -7)
 
-  # FAIL
-  #act <- mysum(1, 1, 2, 3, x=2)
-  #checkEquals(act, -7)
+  act <- mysum(1, 1, 2, 3, x=2)
+  checkEquals(act, -7)
 
   act <- mysum(1, 1, 1, 2, 3, y=2)
   checkEquals(act, -7)

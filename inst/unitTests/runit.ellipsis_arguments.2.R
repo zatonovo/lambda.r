@@ -1,4 +1,5 @@
-regress(formula, ..., na.action='na.fail') %as% {
+# :vim set filetype=R
+regress(formula, ..., na.action=na.fail) %as% {
   lm(formula, ..., na.action=na.action)
 }
 seal(regress)

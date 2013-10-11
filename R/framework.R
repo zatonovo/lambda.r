@@ -9,8 +9,7 @@ is.bound <- function(name) {
 }
 
 # f(a,b) %::% A : B : C
-'%::%' <- function(signature, types)
-{
+'%::%' <- function(signature, types) {
   os <- options(keep.source=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   t.expr <- paste(deparse(substitute(types)), collapse="\n")
@@ -40,8 +39,7 @@ is.bound <- function(name) {
 # f(a,0) %when% { a < 5; a > 0 } %as% { z <- a + 2; z * 2 }
 # f(a,b) %when% { a < 0 } %as% { abs(a) + b }
 # f(a,b) %as% { a + b }
-'%as%' <- function(signature, body)
-{
+'%as%' <- function(signature, body) {
   os <- options(keep.source=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   b.expr <- paste(deparse(substitute(body)), collapse="\n")
@@ -208,79 +206,90 @@ clean_defaults <- function(tree) {
     tree$args$default[-tree$ellipsis]
 }
 
-# TODO: Set proper evaluation environment
+# rm(list=ls()); detach('package:lambda.r', unload=TRUE); library(lambda.r)
 fill_args <- function(params, tokens, defaults, idx.ellipsis)
 {
   args <- list()
   if (is.null(params)) return(args)
 
-  # Initialize arguments with default values
-  idx <- 1:(length(tokens) + length(idx.ellipsis))
-  idx.concrete <- idx[-idx.ellipsis]
+  # Skip parameters that don't coincide with the expected tokens
+  param.names <- names(params)
+  if (!is.null(param.names) &&
+      !all(param.names[nchar(param.names) > 0] %in% tokens) && 
+      length(idx.ellipsis) == 0) return(NULL)
+
+  # Initialize arguments with NA
+  arg.length <- max(length(tokens), length(defaults)) + length(idx.ellipsis)
+  if (arg.length == 0) return(args)
+
+  idx.concrete <- idx.args <- 1:arg.length
+  if (length(idx.ellipsis) > 0)
+    idx.concrete <- idx.args[-idx.ellipsis]
   names(idx.concrete) <- tokens
-  # TODO: Only apply to unset values
-  args[idx.concrete] <- lapply(defaults, function(x) eval(parse(text=x)))
+  args[idx.args] <- NA
   names(args)[idx.concrete] <- tokens
 
   # Populate named arguments
-  param.names <- names(params)
-  named.args <- param.names[param.names %in% tokens]
-  args[named.args] <- params[named.args]
+  named.params <- param.names[param.names %in% tokens]
+  args[named.params] <- params[named.params]
 
-  # Catalog named arguments
-  # TODO: Fix incompatibility between idx.required and idx.named.
-  # idx.required is associated with args, while idx.named is
-  # associated with params.
-  idx.named <- 1:length(params)
-  names(idx.named) <- names(params)
-  idx.named <- idx.named[named.args]
-
-  idx.required <- idx.concrete[is.na(defaults)]
-
-  # Fill the ellipsis with the remainder
-  args[[idx.ellipsis]] <- params[-c(idx.required, idx.named)]
-
-  # If some names, then remove those from the list
-  if (! is.null(param.names)) {
-    idx.unnamed <- (1:length(param.names))[!nchar(param.names)]
-    idx.required <- idx.required[idx.required %in% idx.unnamed]
+  # Catalog named and unnamed arguments
+  idx.params <- 1:length(params)
+  names(idx.params) <- names(params)
+  if (is.null(named.params) || length(named.params) < 1) {
+    idx.p.named <- integer()
+    idx.p.unnamed <- idx.params
+    idx.a.named <- integer()
+    idx.a.unnamed <- idx.concrete
+  } else {
+    idx.p.named <- idx.params[named.params]
+    idx.p.unnamed <- idx.params[-idx.p.named]
+    idx.a.named <- idx.concrete[named.params]
+    idx.a.unnamed <- idx.concrete[-idx.a.named]
   }
-  args[idx.required] <- params[idx.required]
 
-  unlist(args, recursive=FALSE)
+  if (length(idx.ellipsis) > 0) {
+    # Choose only required arguments
+    idx.required <- idx.concrete[is.na(defaults)]
+    idx.required <- idx.required[!idx.required %in% idx.a.named]
+
+    # Set arguments before ellipsis
+    idx.left <- idx.required[idx.required < idx.ellipsis]
+    args[idx.left] <- params[idx.p.unnamed[1:length(idx.left)]]
+
+    idx.right <- idx.required[idx.required > idx.ellipsis]
+    args[idx.right] <- params[tail(idx.p.unnamed, length(idx.right))]
+
+    # Fill the ellipsis with the remainder
+    args[[idx.ellipsis]] <- params[-c(idx.p.named, idx.left, idx.right)]
+  } else if (length(idx.p.unnamed) > 0) {
+      args[idx.a.unnamed[1:length(idx.p.unnamed)]] <- params[idx.p.unnamed]
+  }
+
+  # Apply default values to unset optional arguments
+  if (!is.null(defaults)) {
+    idx.optional <- idx.concrete[is.na(args[idx.concrete]) & !is.na(defaults)]
+    if (length(idx.ellipsis) > 0) {
+      idx.defaults <- ifelse(idx.optional >= idx.ellipsis,
+        idx.optional - 1,
+        idx.optional)
+    } else {
+      idx.defaults <- idx.optional
+    }
+    args[idx.optional] <- lapply(idx.defaults, 
+      function(idx) eval(parse(text=defaults[idx]), list2env(args)))
+  }
+
+  if (length(idx.ellipsis) > 0) {
+    names(args)[idx.ellipsis] <- ''
+    #args <- c(args[-idx.ellipsis],unlist(args[idx.ellipsis], recursive=FALSE))
+    args <- c(args[idx.args < idx.ellipsis],
+      unlist(args[idx.ellipsis], recursive = FALSE),
+      args[idx.args > idx.ellipsis])
+  }
+  args
 }
 
-# Fill raw.args with any default values for unspecified arguments
-fill_args.old <- function(raw.args, tokens, defaults, ellipsis)
-{
-  if (is.null(raw.args)) return(list())
-
-  # This is for unnamed arguments, which means default values
-  # can only be applied via positional inference
-  if (is.null(names(raw.args)))
-  {
-    if (length(raw.args) >= length(defaults)) return(raw.args)
-    ds <- defaults[(length(raw.args)+1):length(defaults)]
-    # TODO: Don't evaluate this here. Do it at execution time
-    vs <- lapply(ds, function(x) eval(parse(text=x)))
-    names(vs) <- NULL
-    c(raw.args, vs)
-  }
-  # If names exist, then arguments need to be aligned properly
-  else
-  {
-    if (length(ellipsis) == 0 && any(! names(raw.args) %in% c("",tokens))) 
-      return(NULL)
-    ds <- lapply(defaults, function(x) x)
-    names(ds) <- tokens
-    shim <- tokens[1:length(raw.args)]
-    names(raw.args)[names(raw.args) == ""] <- shim[names(raw.args) == '']
-    ds[names(raw.args)] <- raw.args
-    gaps <- ! names(ds) %in% names(raw.args)
-    ds[gaps] <- lapply(ds[gaps], function(x) eval(parse(text=x)))
-    ds
-  }
-}
 
 has_ellipsis <- function(declared.types) {
   any(sapply(declared.types, 
