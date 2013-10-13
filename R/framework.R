@@ -210,7 +210,7 @@ clean_defaults <- function(tree) {
 fill_args <- function(params, tokens, defaults, idx.ellipsis)
 {
   args <- list()
-  if (is.null(params)) return(args)
+  if (is.null(params) && all(is.na(defaults))) return(args)
 
   # Skip parameters that don't coincide with the expected tokens
   param.names <- names(params)
@@ -234,36 +234,38 @@ fill_args <- function(params, tokens, defaults, idx.ellipsis)
   args[named.params] <- params[named.params]
 
   # Catalog named and unnamed arguments
-  idx.params <- 1:length(params)
-  names(idx.params) <- names(params)
-  if (is.null(named.params) || length(named.params) < 1) {
-    idx.p.named <- integer()
-    idx.p.unnamed <- idx.params
-    idx.a.named <- integer()
-    idx.a.unnamed <- idx.concrete
-  } else {
-    idx.p.named <- idx.params[named.params]
-    idx.p.unnamed <- idx.params[-idx.p.named]
-    idx.a.named <- idx.concrete[named.params]
-    idx.a.unnamed <- idx.concrete[-idx.a.named]
-  }
+  if (length(params) > 0) {
+    idx.params <- 1:length(params)
+    names(idx.params) <- names(params)
+    if (is.null(named.params) || length(named.params) < 1) {
+      idx.p.named <- integer()
+      idx.p.unnamed <- idx.params
+      idx.a.named <- integer()
+      idx.a.unnamed <- idx.concrete
+    } else {
+      idx.p.named <- idx.params[named.params]
+      idx.p.unnamed <- idx.params[-idx.p.named]
+      idx.a.named <- idx.concrete[named.params]
+      idx.a.unnamed <- idx.concrete[-idx.a.named]
+    }
 
-  if (length(idx.ellipsis) > 0) {
-    # Choose only required arguments
-    idx.required <- idx.concrete[is.na(defaults)]
-    idx.required <- idx.required[!idx.required %in% idx.a.named]
+    if (length(idx.ellipsis) > 0) {
+      # Choose only required arguments
+      idx.required <- idx.concrete[is.na(defaults)]
+      idx.required <- idx.required[!idx.required %in% idx.a.named]
 
-    # Set arguments before ellipsis
-    idx.left <- idx.required[idx.required < idx.ellipsis]
-    args[idx.left] <- params[idx.p.unnamed[1:length(idx.left)]]
+      # Set arguments before ellipsis
+      idx.left <- idx.required[idx.required < idx.ellipsis]
+      args[idx.left] <- params[idx.p.unnamed[1:length(idx.left)]]
 
-    idx.right <- idx.required[idx.required > idx.ellipsis]
-    args[idx.right] <- params[tail(idx.p.unnamed, length(idx.right))]
+      idx.right <- idx.required[idx.required > idx.ellipsis]
+      args[idx.right] <- params[tail(idx.p.unnamed, length(idx.right))]
 
-    # Fill the ellipsis with the remainder
-    args[[idx.ellipsis]] <- params[-c(idx.p.named, idx.left, idx.right)]
-  } else if (length(idx.p.unnamed) > 0) {
-      args[idx.a.unnamed[1:length(idx.p.unnamed)]] <- params[idx.p.unnamed]
+      # Fill the ellipsis with the remainder
+      args[[idx.ellipsis]] <- params[-c(idx.p.named, idx.left, idx.right)]
+    } else if (length(idx.p.unnamed) > 0) {
+        args[idx.a.unnamed[1:length(idx.p.unnamed)]] <- params[idx.p.unnamed]
+    }
   }
 
   # Apply default values to unset optional arguments
