@@ -17,7 +17,7 @@ install:
   - "[ ! -d ~/R ] && mkdir ~/R"
   - R --version
   - R -e '.libPaths(); sessionInfo()'
-  - Rscript -e 'options(repos = c("http://rforge.net", "http://cran.rstudio.org")); install.packages(c("devtools")); library(devtools); install()'
+  - Rscript -e 'options(repos = c("http://rforge.net", "http://cran.rstudio.org")); install.packages(c("RUnit","devtools")); library(devtools); install()'
   - git clone https://github.com/muxspace/crant.git ~/crant
 
 # run tests
