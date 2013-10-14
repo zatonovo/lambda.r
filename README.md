@@ -493,6 +493,21 @@ Don't do this, please. It's bad style.
 What's New
 ==========
 
+Version 1.1.5
+-------------
++ Support the ellipsis (...) in type constraints
++ Support a typed ellipsis (numeric...) in type constraints
++ Support ellipsis type variable (a...) in type constraints
++ Support debug.lr in functions defined in packages (currently locked)
++ Show which functions are being debugged
++ Handle default arguments that execute a function
++ Support more pattern matching (like empty lists)
++ Support guards of the form f(a,b,c) %when% { sum(a,b,c) == 1 } %as% { 1 }
++ Support guards of the form f(x) %when% { length(grep('foo',x)) > 0 } %as% { 1 }
++ Support proper import namespace for packages
++ Install from github using devtools: install_github('lambda.r','zatonovo')
++ Travis CI integration: https://travis-ci.org/zatonovo/lambda.r
+
 Version 1.1.1
 -------------
 + Support Function in every type position (only supported for return type)
@@ -511,10 +526,6 @@ Version 1.1.0
 
 Future
 ======
-+ Support debug.lr in functions defined in packages (currently locked)
-+ Handle default arguments that execute a function
-+ Guard parsing fails on sum(pay[1], spend[1], save[1]) == 1 (probably comma)
-+ Guard parsing fails on length(grep('\\.R$',config.file)) > 0
 + Support *apply and lambda expressions in guard statements
 + Support defining operators
 + Lock functions by default (check when next function is different name). Use
@@ -522,7 +533,6 @@ Future
 + Think about supporting namespaces
 + Support take, drop, cycle
 + Support partial function application
-+ Support more pattern matching (like empty lists)
 + Check for side effects
 + Support tail recursion
 + Support type inference
