@@ -1,4 +1,5 @@
-# it is not really python, but there is no R support on Travis CI yet
+# Courtesy of Kirill Muller
+# It is not really python, but there is no R support on Travis CI yet
 language: python
 
 # environment variables
