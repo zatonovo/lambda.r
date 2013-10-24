@@ -65,4 +65,15 @@ test.type_variable_6 <- function() {
   checkEquals(act, 'error')
 }
 
+test.type_variable_7 <- function() {
+  Point(x,y) %as% list(x=x,y=y)
+  distance(a,b) %::% Point : Point : z 
+  distance(a,b) %as% { ((a$x - b$x)^2 + (a$y - b$y)^2)^.5 }
+  seal(distance)
 
+  point.1 <- Point(2, 2)
+  point.2 <- Point(1, 1)
+
+  act <- distance(point.1, point.2)
+  checkEquals(act, sqrt(2))
+}
