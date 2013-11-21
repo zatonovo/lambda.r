@@ -5,10 +5,8 @@ test.type_any_type_1 <- function() {
   fib(n) %as% { fib(n-1) + fib(n-2) }
   seal(fib)
 
-  act <- tryCatch(fib(3), error=function(x) 'error')
-  checkEquals(act, 'error')
-  #act <- fib(3)
-  #checkEquals(act, 3)
+  act <- fib(4)
+  checkEquals(act, 5)
 }
 
 test.type_any_type_2 <- function() {

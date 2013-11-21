@@ -65,7 +65,7 @@ test.type_variable_6 <- function() {
   checkEquals(act, 'error')
 }
 
-test.type_variable_7 <- function() {
+test.mixed_type_variable_1 <- function() {
   Point(x,y) %as% list(x=x,y=y)
   distance(a,b) %::% Point : Point : z 
   distance(a,b) %as% { ((a$x - b$x)^2 + (a$y - b$y)^2)^.5 }

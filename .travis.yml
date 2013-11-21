@@ -30,4 +30,4 @@ install:
 
 # run tests
 script:
-  - ~/crant/rant -S
+  - ~/crant/crant -S

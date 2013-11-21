@@ -163,8 +163,8 @@ UseFunction <- function(fn,fn.name, ...)
 
   if (!is.null(full.type))
   {
-    return.type <- return_type(full.type, full.args)
     result.class <- class(result)
+    return.type <- return_type(full.type, full.args, result.class)
     if ('integer' %in% result.class) result.class <- c(result.class, 'numeric')
 
     if (return.type == '.') {
@@ -386,7 +386,7 @@ check_types <- function(raw.types, raw.args)
 # variables.
 # TODO: Make this more efficient using information computed
 # by check_types.
-return_type <- function(raw.types, raw.args)
+return_type <- function(raw.types, raw.args, result.class)
 {
   declared.types <- raw.types$types$text
   if (! has_ellipsis(declared.types) &&
@@ -397,7 +397,7 @@ return_type <- function(raw.types, raw.args)
   # Check for type variables (can only be a-z)
   ret.type <- declared.types[length(declared.types)]
   if (ret.type %in% letters) {
-    fn <- dereference_type(declared.types, arg.types)
+    fn <- dereference_type(declared.types, c(arg.types,result.class))
     sapply(1:(length(declared.types)-1), fn)
     ret.type <- fn(length(declared.types))
     if (is.null(ret.type)) ret.type <- ".lambda.r_UNIQUE"
