@@ -770,7 +770,6 @@ add_variant <- function(fn.name, tree, where)
       tree$type.index <- type.index
   }
 
-  attr(tree$def, 'name') <- fn.name
   # Replace existing function clauses if there is a signature match
   idx <- has_variant(variants, args, tree$guard, active.type)
   if (length(idx) > 0) variants[[idx]] <- tree

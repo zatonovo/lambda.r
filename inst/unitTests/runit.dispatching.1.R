@@ -76,3 +76,27 @@ test.different_names <- function() {
   checkEquals(A(b=5)$b, 5)
 }
 
+test.empty_function <- function() {
+  a() %as% {  }
+  seal(a)
+
+  b(a) %as% {  }
+  seal(b)
+
+  # Empty functions will fail
+  checkException(a(), NULL)
+  checkException(b(1), NULL)
+}
+
+test.empty_type_constructor <- function() {
+  A() %as% {  }
+  seal(A)
+
+  B(a) %as% {  }
+  seal(B)
+
+  # Empty functions will fail
+  checkException(A(), NULL)
+  checkException(B(1), NULL)
+}
+
