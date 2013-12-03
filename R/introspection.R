@@ -54,7 +54,7 @@ undebug.lr <- function(x)
 }
 
 #' Undebug all registered functions
-undebugall <- function() {
+undebug.all <- function() {
   sapply(which.debug(), undebug.lr)
   invisible()
 }

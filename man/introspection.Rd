@@ -2,7 +2,7 @@
 \alias{describe}
 \alias{debug.lr}
 \alias{undebug.lr}
-\alias{undebugall}
+\alias{undebug.all}
 \alias{is.debug}
 \alias{which.debug}
 \alias{print.lambdar.fun}
@@ -13,9 +13,15 @@ the evaluation order of the function definitions as well as provide a lambda.r
 compatible debugger.}
 \usage{
 debug.lr(x)
+
 undebug.lr(x)
+
 is.debug(fn.name)
+
 which.debug()
+
+undebug.all()
+
 describe(\dots)
 \method{print}{lambdar.fun}(x, \dots)
 \method{print}{lambdar.type}(x, \dots)
@@ -40,14 +46,15 @@ describe(\dots)
   The 'debug.lr' and 'undebug.lr' functions are replacements for the built-in
   debug and undebug functions. They provide a mechanism to debug a complete
   function, which is compatible with the dispatching in lambda.r. The semantics
-  is identical to the built-ins. Note that these functions will properly
+  are identical to the built-ins. Note that these functions will properly
   handle non-lambda.r functions so only one set of commands need to be
   issued.
 
   Lambda.r keeps track of all functions that are being debugged. To see
   if a function is currently set for debugging, use the \code{is.debug}
   function. To see all functions that are being debugged, use
-  \code{which.debug}.
+  \code{which.debug}. It is possible to undebug all debugged functions
+  by calling \code{undebug.all}.
 }
 \value{
   The defined functions are invisibly returned.
