@@ -587,7 +587,9 @@ guard_fn <- function(raw.args, tree, where)
       else if (patterns$pattern[x] == 'NA')
         paste("is.na(", patterns$token[x],")", sep='')
       else if (patterns$pattern[x] == 'EMPTY')
-        paste("length(", patterns$token[x],") == 0", sep='')
+        paste("length(", patterns$token[x],") == 0 || ",
+          "(!is.null(dim(",patterns$token[x],")) && ",
+          "nrow(",patterns$token[x],") == 0)" , sep='')
       else 
         paste(patterns$token[x],'==',patterns$pattern[x], sep=' ')
     }
@@ -808,11 +810,13 @@ has_variant <- function(variants, args, guard=NULL, active.type=NULL)
     arg.len <- ifelse(is.null(args), 0, nrow(args))
     if (var.len != arg.len) return(NA)
     if (var.len == 0) return (x)
-    if (!is.null(v$guard) || !is.null(guard)) {
-      if (!is.null(v$guard) && is.null(guard)) return(NA)
-      if (is.null(v$guard) && !is.null(guard)) return(NA)
-      if (!all(deparse(v$guard) == deparse(guard)) ) return(NA)
-    }
+    if (is.null(v$guard) && is.null(guard)) return(NA)
+
+    dv <- deparse(v$guard)
+    dg <- deparse(guard)
+    if (length(dv) != length(dg)) return(NA)
+    if (!all(deparse(v$guard) == deparse(guard))) return(NA)
+
     args$pattern[is.na(args$pattern)] <- ".lambdar_NA" 
     v$args$pattern[is.na(v$args$pattern)] <- ".lambdar_NA"
     ifelse(all(v$args[,keys] == args[,keys]),x, NA)
