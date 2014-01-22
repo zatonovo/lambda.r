@@ -262,7 +262,12 @@ fill_args <- function(params, tokens, defaults, idx.ellipsis)
       args[idx.right] <- params[tail(idx.p.unnamed, length(idx.right))]
 
       # Fill the ellipsis with the remainder
-      args[[idx.ellipsis]] <- params[-c(idx.p.named, idx.left, idx.right)]
+      orphans <- c(idx.p.named, idx.left, idx.right)
+      if (length(orphans) == 0) {
+        args[[idx.ellipsis]] <- params
+      } else {
+        args[[idx.ellipsis]] <- params[-orphans]
+      }
     } else if (length(idx.p.unnamed) > 0) {
         args[idx.a.unnamed[1:length(idx.p.unnamed)]] <- params[idx.p.unnamed]
     }

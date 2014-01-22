@@ -87,3 +87,28 @@ test.inheritance_with_type_variable <- function() {
   act.c <- two.arg(c,b)
   checkEquals(act.c, "a")
 }
+
+
+test.inheritance_with_ellipsis_1 <- function() {
+  Base(x, ...) %as% list(x=x, ...)
+  A(x, z) %as% { Base(x, z=z) }
+
+  seal(Base)
+  seal(A)
+
+  a <- A(1, 2)
+  checkEquals(a$x, 1)
+  checkEquals(a$z, 2)
+}
+
+test.inheritance_with_ellipsis_2 <- function() {
+  Base(x=1, ...) %as% list(x=x, ...)
+  A(z) %as% { Base(z=z) }
+
+  seal(Base)
+  seal(A)
+
+  a <- A(2)
+  checkEquals(a$x, 1)
+  checkEquals(a$z, 2)
+}
