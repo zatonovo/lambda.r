@@ -164,7 +164,7 @@ UseFunction <- function(fn,fn.name, ...)
   if (!is.null(full.type))
   {
     result.class <- class(result)
-    return.type <- return_type(full.type, full.args, result.class)
+    return.type <- return_type(full.type, full.args, result.class)[1]
     if ('integer' %in% result.class) result.class <- c(result.class, 'numeric')
 
     if (return.type == '.') {
