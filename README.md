@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/zatonovo/lambda.r.png)](https://travis-ci.org/zatonovo/lambda.r)
+
 Description
 ===========
 Provides a syntax for writing functional programs in R. Lambda.R has a clean
