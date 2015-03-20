@@ -2,7 +2,7 @@
 
 Description
 ===========
-Provides a syntax for writing functional programs in R. Lambda.R has a clean
+Provides a syntax for writing functional programs in R. Lambda.r has a clean
 syntax for defining multi-part functions with optional guard statements.
 Simple pattern matching is also supported. Types can be
 easily defined and instantiated using the same functional notation. Type 

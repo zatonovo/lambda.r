@@ -305,15 +305,24 @@ your R session. Here is a short example demonstrating this.
 }
 
 }
+\note{
+Stable releases are uploaded to CRAN about once a year. The most recent
+package is always available on github [2] and can be installed via
+`rpackage` in `crant` [3].
+\preformatted{rpackage https://github.com/zatonovo/lambda.r/archive/master.zip
+}
+}
 \author{
 Brian Lee Yung Rowe
 
 Maintainer: Brian Lee Yung Rowe <r@zatonovo.com>
 }
 \references{
-Blog posts on lambda.r: http://cartesianfaith.com/category/r/lambda-r/
+[1] Blog posts on lambda.r: http://cartesianfaith.com/category/r/lambda-r/
 
-Project site: https://github.com/muxspace/lambda.r
+[2] Lambda.r source code, https://github.com/muxspace/lambda.r
+
+[3] Crant, https://github.com/muxspace/crant
 }
 \keyword{ package }
 \keyword{ programming }
