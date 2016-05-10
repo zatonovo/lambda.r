@@ -17,13 +17,12 @@ install:
       r-cran-lattice r-cran-matrix r-cran-nlme r-cran-survival 
       r-cran-boot r-cran-cluster r-cran-foreign r-cran-kernsmooth 
       r-cran-rpart r-cran-class r-cran-nnet r-cran-spatial r-cran-mgcv
-      qpdf texinfo texlive-latex-recommended texlive-latex-extra lmodern 
-      texlive-fonts-recommended texlive-fonts-extra
+      qpdf texinfo texlive-latex-recommended texlive-latex-extra 
+      lmodern texlive-fonts-recommended texlive-fonts-extra
   - "[ ! -d ~/R ] && mkdir ~/R"
   - git clone https://github.com/muxspace/crant.git ~/crant
-  - ~/crant/rpackage RUnit devtools
+  - ~/crant/rpackage RUnit
   - R -e '.libPaths(); sessionInfo()'
-  - R --vanilla -e 'library(devtools)' -e 'install()'
 
 # run tests
 script:
