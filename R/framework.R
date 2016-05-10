@@ -622,7 +622,8 @@ guard_fn <- function(raw.args, tree, where)
 transform_attrs <- function(tree)
 {
   start <- grep("'@'", tree$token, value=FALSE) - 1
-  stop <- grep("SLOT", tree$token, value=FALSE)
+  #stop <- grep("SLOT", tree$token, value=FALSE)
+  stop <- start + 2
   if (length(start) < 1) return(tree)
 
   template <- data.frame(line1=0,
@@ -641,10 +642,12 @@ transform_attrs <- function(tree)
   cut.fn <- function(idx)
   {
     ls <- NULL
+    # Grab lines preceding transform
     if (idx == 1) inf <- 1
     else inf <- positions$stop[idx - 1] + 1
     sup <- positions$start[idx] - 1
-    if (sup > 0) ls <- rbind(ls, tree[inf:sup,])
+    if (inf < positions$start[idx] && sup >= inf)
+      ls <- rbind(ls, tree[inf:sup,])
 
     i <- tree[positions$start[idx],]$line1
     o <- tree[positions$start[idx],]$text
@@ -656,7 +659,7 @@ transform_attrs <- function(tree)
     }
     ls
   }
-  lines <- apply(array(1:nrow(positions)),1,cut.fn)
+  lines <- lapply(1:nrow(positions), cut.fn)
   do.call(rbind, lines)
 }
 
@@ -694,8 +697,8 @@ body_fn <- function(raw.args, tree, where)
   if (!is.null(tree))
   {
     f <- function(x) paste(tree[tree$line1 %in% x,]$text, collapse=' ')
-    index <- array(unique(tree$line1))
-    lines <- apply(index,1,f)
+    index <- unique(tree$line1)
+    lines <- lapply(index,f)
   }
 
   if (length(lines) < 1) return(NULL)
