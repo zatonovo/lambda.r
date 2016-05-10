@@ -20,13 +20,10 @@ install:
       qpdf texinfo texlive-latex-recommended texlive-latex-extra lmodern 
       texlive-fonts-recommended texlive-fonts-extra
   - "[ ! -d ~/R ] && mkdir ~/R"
-  - R --version
-  - R -e '.libPaths(); sessionInfo()'
-  - R --vanilla -e 'options(repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-      -e 'install.packages(c("RUnit","devtools"))'
-      -e 'library(devtools)'
-      -e 'install()'
   - git clone https://github.com/muxspace/crant.git ~/crant
+  - ~/crant/rpackage RUnit devtools
+  - R -e '.libPaths(); sessionInfo()'
+  - R --vanilla -e 'library(devtools)' -e 'install()'
 
 # run tests
 script:
