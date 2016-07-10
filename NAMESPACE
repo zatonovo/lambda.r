@@ -1,3 +1,4 @@
+importFrom("utils", "capture.output", "getParseData", "str", "tail")
 export("%as%")
 export("%::%")
 export("UseFunction")
