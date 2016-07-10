@@ -1,29 +1,8 @@
-# Courtesy of Kirill Muller
-# It is not really python, but there is no R support on Travis CI yet
-language: python
+language: r
+cache: packages
 
-# environment variables
-env:
-  - R_LIBS_USER=~/R PATH=$PATH:~/crant
+r:
+  - oldrel
+  - release
+  - devel
 
-# install dependencies
-install:
-  - sudo apt-add-repository -y 'deb http://cran.rstudio.com/bin/linux/ubuntu precise/'
-  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
-  - sudo apt-add-repository -y ppa:marutter/c2d4u
-  - sudo apt-get update
-  - sudo apt-get install --no-install-recommends 
-      r-base-dev r-cran-xml r-cran-rcurl r-cran-mass r-cran-codetools
-      r-cran-lattice r-cran-matrix r-cran-nlme r-cran-survival 
-      r-cran-boot r-cran-cluster r-cran-foreign r-cran-kernsmooth 
-      r-cran-rpart r-cran-class r-cran-nnet r-cran-spatial r-cran-mgcv
-      qpdf texinfo texlive-latex-recommended texlive-latex-extra 
-      lmodern texlive-fonts-recommended texlive-fonts-extra
-  - "[ ! -d ~/R ] && mkdir ~/R"
-  - git clone https://github.com/muxspace/crant.git ~/crant
-  - ~/crant/rpackage RUnit
-  - R -e '.libPaths(); sessionInfo()'
-
-# run tests
-script:
-  - ~/crant/crant -S
