@@ -233,6 +233,12 @@ fill_args <- function(params, tokens, defaults, idx.ellipsis)
   named.params <- param.names[param.names %in% tokens]
   args[named.params] <- params[named.params]
 
+# TODO refer: https://cran.r-project.org/doc/manuals/R-lang.html#Argument-matching
+# after matching tags,
+# do positional matching procedure. 
+# bound all unmatched arguments to supplied arguments
+
+
   # Catalog named and unnamed arguments
   if (length(params) > 0) {
     idx.params <- 1:length(params)
@@ -248,7 +254,7 @@ fill_args <- function(params, tokens, defaults, idx.ellipsis)
       idx.a.named <- idx.concrete[named.params]
       idx.a.unnamed <- idx.concrete[-idx.a.named]
     }
-
+    
     if (length(idx.ellipsis) > 0) {
       # Choose only required arguments
       idx.required <- idx.concrete[is.na(defaults)]
@@ -769,7 +775,8 @@ add_variant <- function(fn.name, tree, where)
     tree$accepts <- c(0,0)
   else {
     args <- tree$args
-    required.args <- length(args$default[is.na(args$default)])
+#    required.args <- length(args$default[is.na(args$default)])
+    required.args <- sum(is.na(args$default))
     if ('...' %in% tree$args$token)
       tree$accepts <- c(required.args-1, Inf)
       #tree$accepts <- c(required.args : nrow(args) - 1, Inf)
