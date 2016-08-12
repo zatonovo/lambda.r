@@ -160,9 +160,9 @@ UseFunction <- function(fn,fn.name, ...)
     stop(use_error(.ERR_USE_FUNCTION,fn.name,raw.args))
   
   # use eval(parse(text = str)), instead of do.call
-  raw.args.string <- get_args_raw_string(raw.args)
-  result <- eval(parse(text = paste('matched.fn(', raw.args.string, ')')))
-  #result <- do.call(matched.fn, full.args)
+  #raw.args.string <- get_args_raw_string(raw.args)
+  #result <- eval(parse(text = paste('matched.fn(', raw.args.string, ')')))
+  result <- do.call(matched.fn, full.args)
 
   if (!is.null(full.type))
   {
@@ -193,7 +193,7 @@ get_args_raw_string <- function(raw.args) {
   raw.args.list <- list()
   invisible(lapply(1:length(raw.args), function(i) {
     name <- names(raw.args[i])
-    value <- as.character(raw.args[i])
+    value <- paste0("raw.args[[", i, "]]")
     if(is.null(name) || name == '') {
       raw.args.list <<- append(raw.args.list, value)
     } else raw.args.list <<- append(raw.args.list, paste(name, value, sep = ' = '))
