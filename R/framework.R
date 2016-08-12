@@ -160,17 +160,7 @@ UseFunction <- function(fn,fn.name, ...)
     stop(use_error(.ERR_USE_FUNCTION,fn.name,raw.args))
   
   # use eval(parse(text = str)), instead of do.call
-  raw.args.list <- list()
-  invisible(lapply(raw.args, function(i) {
-    name <- names(raw.args[i])
-    value <- as.character(raw.args[i])
-    if(is.null(name) || name == '') {
-      raw.args.list <<- append(raw.args.list, value)
-    } else raw.args.list <<- append(raw.args.list, paste(name, value, sep = ' = '))
-  }))
-  raw.args.list <- append(raw.args.list, ', ')
-  names(raw.args.list)[length(raw.args.list)] <- 'sep'
-  raw.args.string <- do.call(paste, raw.args.list)
+  raw.args.string <- get_args_raw_string(raw.args)
   result <- eval(parse(text = paste('matched.fn(', raw.args.string, ')')))
   #result <- do.call(matched.fn, full.args)
 
@@ -196,10 +186,22 @@ UseFunction <- function(fn,fn.name, ...)
       stop(use_error(msg,fn.name,raw.args))
     }
   }
-
   result
 }
 
+get_args_raw_string <- function(raw.args) {
+  raw.args.list <- list()
+  invisible(lapply(1:length(raw.args), function(i) {
+    name <- names(raw.args[i])
+    value <- as.character(raw.args[i])
+    if(is.null(name) || name == '') {
+      raw.args.list <<- append(raw.args.list, value)
+    } else raw.args.list <<- append(raw.args.list, paste(name, value, sep = ' = '))
+  }))
+  raw.args.list <- append(raw.args.list, ', ')
+  names(raw.args.list)[length(raw.args.list)] <- 'sep'
+  do.call(paste, raw.args.list)
+}
 
 idx_ellipsis <- function(tree) {
   which(tree$args$token == '...')
