@@ -158,8 +158,21 @@ UseFunction <- function(fn,fn.name, ...)
   }
   if (is.null(matched.fn))
     stop(use_error(.ERR_USE_FUNCTION,fn.name,raw.args))
-
-  result <- do.call(matched.fn, full.args)
+  
+  # use eval(parse(text = str)), instead of do.call
+  raw.args.list <- list()
+  invisible(lapply(raw.args, function(i) {
+    name <- names(raw.args[i])
+    value <- as.character(raw.args[i])
+    if(is.null(name) || name == '') {
+      raw.args.list <<- append(raw.args.list, value)
+    } else raw.args.list <<- append(raw.args.list, paste(name, value, sep = ' = '))
+  }))
+  raw.args.list <- append(raw.args.list, ', ')
+  names(raw.args.list)[length(raw.args.list)] <- 'sep'
+  raw.args.string <- do.call(paste, raw.args.list)
+  result <- eval(parse(text = paste('matched.fn(', raw.args.string, ')')))
+  #result <- do.call(matched.fn, full.args)
 
   if (!is.null(full.type))
   {
@@ -233,7 +246,7 @@ fill_args <- function(params, tokens, defaults, idx.ellipsis)
   named.params <- param.names[param.names %in% tokens]
   args[named.params] <- params[named.params]
 
-# TODO refer: https://cran.r-project.org/doc/manuals/R-lang.html#Argument-matching
+# TODO: refer: https://cran.r-project.org/doc/manuals/R-lang.html#Argument-matching
 # after matching tags,
 # do positional matching procedure. 
 # bound all unmatched arguments to supplied arguments
