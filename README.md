@@ -76,8 +76,9 @@ execute if the types are correct.
 
 Defining a type
 ---------------
-Types are defined by defining their constructor. The return value of the
-constructor is automatically typed. Hence the value x will be of type Integer.
+Types are defined by defining their constructor.  We define constructors using 
+an uppercase function name.  The return value of the constructor is 
+automatically typed.  Hence the value x will be of type Integer.
 
 ```R
 Integer(x) %as% x
@@ -387,10 +388,11 @@ no way of knowing which one you mean. Hence, you have to tell lambda.r via
 the type constraint.
 
 
-For example take this simple reciprocal function. It has two three clauses
-and two type constraints. There is an explicit bug in the body of the second
-variant. Note that the signatures for variants 2 and 3 are
-identical and the only thing that distinguishes them are ther type constraints.
+For example take this simple reciprocal function. There are two type constraint
+clauses, and three total function variants.  The signatures for variants 2 and 3 
+are identical, so the only thing that distinguishes them are the different type 
+constraints associated with each one.  Notice that there is an explicit bug in 
+the definition of variant 2.
 
 ```R
 reciprocal(n) %::% numeric : numeric
@@ -399,11 +401,11 @@ reciprocal(n) %as% { 2/n }
 
 reciprocal(n) %::% character : numeric
 reciprocal(n) %as% { reciprocal(as.numeric(n)) }
-
 ```
 
-To change the definition of the second function variant, you must re-declare
-the first type constraint.
+To change the definition of variant 2, you must re-declare
+the first type constraint.  Otherwise, lambda.r would not know whether to update
+variant 2 or 3.
 
 ```R
 reciprocal(n) %::% numeric : numeric
