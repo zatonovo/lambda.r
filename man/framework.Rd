@@ -1,5 +1,6 @@
 \name{\%as\%}
 \alias{\%as\%}
+\alias{\%:=\%}
 \alias{\%::\%}
 \alias{EMPTY}
 \alias{seal}

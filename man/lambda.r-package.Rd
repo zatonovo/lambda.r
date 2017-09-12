@@ -47,8 +47,9 @@ in addition to making programs modular and easier to maintain.
 
 
 \subsection{Function Definition}{
-Functions are defined using the \code{\%as\%} symbol in place of \code{<-}.
-Simple functions can be defined as simply as
+Functions are defined using the \code{\%as\%} (or \code{\%:=\%}) symbol 
+in place of \code{<-}.
+Simple functions can be defined as simply
 \preformatted{f(x) \%as\% x }
 and can be called like any other function.
 \preformatted{f(1) }
@@ -56,7 +57,18 @@ and can be called like any other function.
 Functions that have a more complicated body require braces.
 \preformatted{f(x) \%as\% { 2 * x }
 
-g(x, y) \%as\% {
+g(x, y) \%:=\% {
+  z <- x + y
+  sqrt(z)
+}
+}
+
+\subsection{Infix notation}{
+Functions can be defined using infix notation as well.
+For the function \code{g} above, it can be defined as an infix operator
+using
+
+x \%g\% y \%:=\% {
   z <- x + y
   sqrt(z)
 }
