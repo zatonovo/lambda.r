@@ -20,7 +20,12 @@ is.bound <- function(name) {
 
   it <- iterator(raw)
   tree <- list(args=NULL)
-  args_expr <- parse_fun(it)
+  args_expr <- parse_infix(raw)
+  if (is.null(args_expr)) {
+    args_expr <- parse_fun(it)
+  } else {
+    fast_forward(it, '%::%')
+  }
   name <- args_expr$token[1]
   if (is.bound(name))
     stop("Function name is already bound to non lambda.r object")
@@ -47,10 +52,16 @@ is.bound <- function(name) {
   raw <- getParseData(parse(text=text))
   # SPECIAL tokens now appear with a leading white space
   raw$text <- sub("^ ","", raw$text)
+  raw$text <- sub("%:=%","%as%", raw$text, fixed=TRUE)
   it <- iterator(raw)
-
   tree <- list(args=NULL)
-  args_expr <- parse_fun(it)
+
+  args_expr <- parse_infix(raw)
+  if (is.null(args_expr)) {
+    args_expr <- parse_fun(it)
+  } else {
+    fast_forward(it, c('%as%','%when%'))
+  }
   name <- args_expr$token[1]
   if (is.bound(name))
     stop("Function name is already bound to non lambda.r object")
@@ -80,6 +91,8 @@ is.bound <- function(name) {
   options(keep.source=os$keep.source)
   invisible()
 }
+
+'%:=%' <- `%as%`
 
 ################################## RUN TIME ###################################
 .ERR_NO_MATCH <- "No match for function"
@@ -434,8 +447,9 @@ iterator <- function(tree)
   if (!is.null(tree)) tree <- tree[! (tree$token=='expr' & tree$text==''),]
   cap <- nrow(tree) + 1
   idx <- 0
-  function(rewind=FALSE)
+  function(rewind=FALSE, dump=FALSE)
   {
+    if (dump) return(tree[idx:nrow(tree),])
     if (rewind) idx <<- idx - 1
     else idx <<- idx + 1
     if (idx < cap) tree[idx,]
@@ -443,18 +457,34 @@ iterator <- function(tree)
   }
 }
 
-get_name <- function(it)
-{
+get_name <- function(it) {
   line <- it()
   if (line$token != 'SYMBOL_FUNCTION_CALL')
     stop("Function must start with a symbol (instead of ",line$token,")")
   line$text
 }
 
+fast_forward <- function(it, what) {
+  while (!is.na(line <- it()) && ! line$text %in% what) { }
+  it(rewind=TRUE)
+}
+
+parse_infix <- function(raw) {
+  raw <- raw[raw$token != 'expr' & raw$terminal,]
+  raw <- raw[1:nrow(raw) < which(raw$text %in% c('%as%','%::%','%when%'))[1],]
+  if (! identical(raw$token, c('SYMBOL','SPECIAL','SYMBOL'))) return(NULL)
+
+  fn.name <- raw$text[raw$token=='SPECIAL']
+  arg.name <- raw$text[raw$token=='SYMBOL']
+  data.frame(paren.level=c(0,1,1), 
+    node=c('function.name','argument','argument'),
+    token=c(fn.name,arg.name),
+    pattern=NA, default=NA, stringsAsFactors=FALSE)
+}
+
 # parse_fun(raw=parser(text="fib(0,y=some.fun(1)) %as% 1"))
 # parse_fun(raw=parser(text="fib(x,y=some.fun(1), 'bgfs') %as% 1"))
-parse_fun <- function(it, raw=NULL)
-{
+parse_fun <- function(it, raw=NULL) {
   if (!is.null(raw)) { it <- iterator(raw) }
   name <- get_name(it)
   paren.level <- 0
@@ -663,10 +693,9 @@ transform_attrs <- function(tree)
   do.call(rbind, lines)
 }
 
-is.type <- function(fn.string)
-{
-  length(grep('^[A-Z]', fn.string)) > 0
-}
+is.type <- function(fn.string) { grepl('^[A-Z]', fn.string) }
+
+is.infix <- function(fn.string) { grepl('^%[^%]+%$', fn.string) }
 
 
 parse_body <- function(it)
@@ -930,10 +959,14 @@ setup_parent <- function(parent, where)
 
 init_function <- function(name, where)
 {
-  if (is.type(name)) 
+  if (is.type(name)) {
     pattern <- 'function(...) NewObject(%s,"%s",...)'
-  else
+  } else if (is.infix(name)) {
+    pattern <- 'function(...) UseFunction(`%s`,"%s",...)'
+  } else {
     pattern <- 'function(...) UseFunction(%s,"%s",...)'
+  }
+
   fn <- eval(parse(text=sprintf(pattern,name,name)), where)
   if (is.type(name))
     attr(fn, 'class') <- c('lambdar.type', 'function')

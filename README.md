@@ -473,6 +473,55 @@ function(x) { x }
 <environment: 0x10494aca8>
 ```
 
+
+Monads
+------
+
+Maybe(a) %:=% a
+Just(a) %:=% Maybe(a)
+Nothing() %:=% Maybe(NA)
+
+mreturn(x) %as% Just(x)
+
+
+m %>>=% g %when% { is.null(m) } %as% NULL
+m %>>=% g %::% Just : Function : Maybe
+m %>>=% g %as% g(m)
+
+
+
+m %>>=% g %::% Nothing : Function : Maybe
+m %>>=% g %as% m
+
+m %>>=% g %::% Just : Function : Maybe
+m %>>=% g %as% g(m)
+
+
+Composition
+f %.% g %:=% function(...) f(g(...))
+
+> unsafelogsqrt <- log %.% sqrt
+> unsafelogsqrt(100)
+ [1] 2.302585
+
+
+Monadic composition
+f %>=>% g %:=% { function(x) f(x) %>>=% g }
+f %<=<% g %:=% { function(x) g(x) %>>=% f }
+
+safelog(x) %::% numeric : Maybe
+safelog(x) %when% { x <= 0 } %as% Nothing()
+safelog(x) %:=% Just(log(x))
+
+safesqrt(x) %::% numeric : Maybe
+safesqrt(x) %when% { x <= 0 } %as% Nothing()
+safesqrt(x) %:=% Just(sqrt(x))
+
+safelogsqrt <- safelog %<=<% safesqrt
+
+
+
+
 Debugging
 ---------
 The standard debug function will not work with lambda.r functions. Instead, use
@@ -481,7 +530,7 @@ to debug through a complete multipart function call.
 
 Known Limitations
 =================
-If you try to break lambda r, you will most likely succeed. There are things 
+If you try to break lambda.r, you will most likely succeed. There are things 
 that won't work, but most use cases should work fine. Do let me know if you 
 find something that fails, but don't break it just to break it. Below are
 some things that won't work.
