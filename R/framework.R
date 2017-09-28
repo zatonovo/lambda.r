@@ -144,7 +144,7 @@ NewObject <- function(type.fn,type.name, ...)
 UseFunction <- function(fn,fn.name, ...)
 {
   # If user has added more definitions, attempt to access it
-  fn <- tryCatch(get(fn.name), error=function(e) fn)
+  fn <- tryCatch(get_lr(fn.name), error=function(e) fn)
   result <- NULL
   # u:0.007 s:0.002
   raw.args <- list(...)
@@ -1127,3 +1127,15 @@ parse_eval <- function(it, raw=NULL)
   invisible()
 }
 
+
+get_lr <- function(fn.name) {
+  fn <- NULL
+  frames <- sys.frames()
+  n <- length(frames)
+  while (n > 0) {
+    fn <- get0(fn.name, frames[[n]], inherits=FALSE)
+    if (! is.null(fn)) return(fn)
+    n <- n - 1
+  }
+  get(fn.name)
+}
