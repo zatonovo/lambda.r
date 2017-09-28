@@ -1,10 +1,10 @@
-describe(fn, idx, raw=FALSE) %when% { raw } %as% {
+describe(fn, idx, raw=FALSE) %when% { raw } %:=% {
   class(fn) <- NULL
   print(fn)
 }
 describe(fn, idx) %when% {
   idx > 0
-} %as% {
+} %:=% {
   variants <- attr(fn,'variants')
   types <- attr(fn,'types')
   if (length(variants) < 1) stop("Nothing to describe")
@@ -81,7 +81,7 @@ print.lambdar.fun <- function(x, ...)
     cat("[[",idx,"]]\n",sep='')
     if (!is.null(f$type.index)) 
       cat(types[[f$type.index]]$signature,"\n")
-    cat(f$signature,"%as% ...\n")
+    cat(f$signature,"%:=% ...\n")
   }
   sapply(1:length(variants),fn)
   invisible()
@@ -91,7 +91,7 @@ print.lambdar.type <- function(x, ...)
 {
   variants <- attr(x,'variants')
   types <- attr(x,'types')
-  if (is.null(variants)) stop("Oops: lambda.R type constructor incorrectly defined")
+  if (is.null(variants)) stop("Oops: lambda.r type constructor incorrectly defined")
   cat("<type constructor>\n")
   fn <- function(idx)
   {
@@ -99,7 +99,7 @@ print.lambdar.type <- function(x, ...)
     cat("[[",idx,"]]\n",sep='')
     if (!is.null(f$type.index)) 
       cat(types[[f$type.index]]$signature,"\n")
-    cat(f$signature,"%as% ...\n")
+    cat(f$signature,"%:=% ...\n")
   }
   sapply(1:length(variants),fn)
   invisible()
