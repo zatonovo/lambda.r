@@ -1,4 +1,5 @@
 importFrom("utils", "capture.output", "getParseData", "str", "tail")
+importFrom("formatR", "tidy_source")
 export("%as%")
 export("%:=%")
 export("%::%")
