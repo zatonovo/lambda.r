@@ -23,8 +23,8 @@ and convenient syntax that reduces type clutter.
 \tabular{ll}{
 Package: \tab lambda.r\cr
 Type: \tab Package\cr
-Version: \tab 1.2.1\cr
-Date: \tab 2017-09-28\cr
+Version: \tab 1.2.2\cr
+Date: \tab 2018-04-20\cr
 License: \tab LGPL-3\cr
 LazyLoad: \tab yes\cr
 }
