@@ -1,4 +1,6 @@
-test.parse_transforms_1 <- function() {
+rm(list=ls())
+
+assert('parse_transforms_1', {
   Prices(series) %as% 
   {
     series@asset.class <- 'equity'
@@ -14,9 +16,9 @@ test.parse_transforms_1 <- function() {
   }
 
   ps <- Prices(rnorm(50))
-  checkEquals(attr(ps,'asset.class'), 'equity')
-  checkEquals(attr(ps,'periodicity'), 'daily')
+  (attr(ps,'asset.class') == 'equity')
+  (attr(ps,'periodicity') == 'daily')
 
   rs <- returns(ps)
-  checkEquals(length(rs), length(ps) - 1)
-}
+  (length(rs) == length(ps) - 1)
+})

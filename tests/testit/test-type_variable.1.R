@@ -1,3 +1,4 @@
+rm(list=ls())
 test.type_variable_1 <- function() {
   fib(n) %::% a : a
   fib(0) %as% 1
@@ -8,10 +9,10 @@ test.type_variable_1 <- function() {
   #act <- tryCatch(f(2,3), error=function(x) 'error')
   #checkEquals(act, 'error')
   act <- fib(3)
-  checkEquals(act, 3)
+  (act == 3)
 }
 
-# This is not working from the shell but works interactively
+rm(list=ls())
 ignore.type_variable_2 <- function() {
   fib(n) %::% b : a
   fib(0) %as% 1
@@ -20,11 +21,11 @@ ignore.type_variable_2 <- function() {
   seal(fib)
 
   act <- tryCatch(f(2), error=function(x) 'error')
-  cat("\ntest.type_variable_2: act =",act,"\n")
-  checkEquals('error', act)
+  #cat("\ntest.type_variable_2: act =",act,"\n")
+  ('error' == act)
 }
 
-# This is not working from the shell but works interactively
+rm(list=ls())
 ignore.type_variable_3 <- function() {
   fib(n) %::% a : b
   fib(0) %as% 1
@@ -33,9 +34,10 @@ ignore.type_variable_3 <- function() {
   seal(fib)
 
   act <- tryCatch(f(2), error=function(x) 'error')
-  checkEquals('error', act)
+  ('error' == act)
 }
 
+rm(list=ls())
 test.type_variable_4 <- function() {
   hypotenuse(a,b) %::% a : a : a
   hypotenuse(a,b) %as% { (a^2 + b^2)^.5 }
@@ -44,27 +46,30 @@ test.type_variable_4 <- function() {
   #act <- tryCatch(f(2), error=function(x) 'error')
   #checkEquals(act, 'error')
   act <- hypotenuse(3,4)
-  checkEquals(act,5)
+  (act ==5)
 }
 
+rm(list=ls())
 test.type_variable_5 <- function() {
   hypotenuse(a,b) %::% a : b : a
   hypotenuse(a,b) %as% { (a^2 + b^2)^.5 }
   seal(hypotenuse)
 
   act <- tryCatch(hypotenuse(5,12), error=function(x) 'error')
-  checkEquals(act, 'error')
+  (act == 'error')
 }
 
+rm(list=ls())
 test.type_variable_6 <- function() {
   hypotenuse(a,b) %::% a : a : b
   hypotenuse(a,b) %as% { (a^2 + b^2)^.5 }
   seal(hypotenuse)
 
   act <- tryCatch(hypotenuse(5,12), error=function(x) 'error')
-  checkEquals(act, 'error')
+  (act == 'error')
 }
 
+rm(list=ls())
 test.mixed_type_variable_1 <- function() {
   Point(x,y) %as% list(x=x,y=y)
   distance(a,b) %::% Point : Point : z 
@@ -75,5 +80,5 @@ test.mixed_type_variable_1 <- function() {
   point.2 <- Point(1, 1)
 
   act <- distance(point.1, point.2)
-  checkEquals(act, sqrt(2))
+  (act == sqrt(2))
 }

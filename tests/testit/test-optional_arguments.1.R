@@ -1,6 +1,7 @@
 # vim: set filetype=R
 
-test.optional_arguments_1a <- function() {
+rm(list=ls())
+assert('optional_arguments_1a', {
   Prices(series, asset.class='equity', periodicity='daily') %as% {
     series@asset.class <- asset.class
     series@periodicity <- periodicity
@@ -17,31 +18,32 @@ test.optional_arguments_1a <- function() {
   seal(returns)
 
   ps <- Prices(abs(rnorm(50)))
-  checkEquals(attr(ps,'asset.class'), 'equity')
-  checkEquals(attr(ps,'periodicity'), 'daily')
+  (attr(ps,'asset.class') == 'equity')
+  (attr(ps,'periodicity') == 'daily')
 
   ps <- Prices(abs(rnorm(50)), 'fx')
-  checkEquals(attr(ps,'asset.class'), 'fx')
-  checkEquals(attr(ps,'periodicity'), 'daily')
+  (attr(ps,'asset.class') == 'fx')
+  (attr(ps,'periodicity') == 'daily')
 
   ps <- Prices(abs(rnorm(50)), periodicity='monthly')
-  checkEquals(attr(ps,'asset.class'), 'equity')
-  checkEquals(attr(ps,'periodicity'), 'monthly')
+  (attr(ps,'asset.class') == 'equity')
+  (attr(ps,'periodicity') == 'monthly')
 
   ps <- Prices(periodicity='monthly', series=abs(rnorm(50)))
-  checkEquals(attr(ps,'asset.class'), 'equity')
-  checkEquals(attr(ps,'periodicity'), 'monthly')
+  (attr(ps,'asset.class') == 'equity')
+  (attr(ps,'periodicity') == 'monthly')
 
   err <- tryCatch(returns(ps), error=function(x) 'error')
-  checkEquals(err, 'error')
+  (err == 'error')
 
   ps <- Prices(abs(rnorm(50)))
-  checkEquals(length(returns(ps)), length(ps) - 1)
+  (length(returns(ps)) == length(ps) - 1)
 
-}
+})
 
 
-test.optional_arguments_1b <- function() {
+rm(list=ls())
+assert('optional_arguments_1b', {
   Temperature(x, system='metric', units='celsius') %as% {
     x@system <- system
     x@units <- units
@@ -68,20 +70,21 @@ test.optional_arguments_1b <- function() {
   seal(freezing)
 
   ctemp <- Temperature(20)
-  checkTrue(! freezing(ctemp))
+  (! freezing(ctemp))
 
   ktemp <- Temperature(20, units='kelvin')
-  checkTrue(freezing(ktemp))
-}
+  (freezing(ktemp))
+})
 
 
-test.optional_arguments_1c <- function() {
+rm(list=ls())
+assert('optional_arguments_1c', {
   avg(x, fun=mean) %as% { fun(x) }
 
   a <- 1:4
   a.mean <- avg(a)
-  checkEquals(a.mean, 2.5)
+  (a.mean == 2.5)
 
   a.med <- avg(a, median)
-  checkEquals(a.med, 2.5)
-}
+  (a.med == 2.5)
+})

@@ -1,3 +1,5 @@
+rm(list=ls())
+
 Temperature(x, system, units) %as%
 {
   x@system <- system
@@ -13,10 +15,10 @@ freezing(x) %when% {
   else { FALSE }
 }
 
-test.parse_transforms_2 <- function() {
+assert('parse_transforms_2', {
   temp <- Temperature(20, 'metric', 'celsius')
-  checkEquals(attr(temp,'system'), 'metric')
-  checkEquals(attr(temp,'units'), 'celsius')
+  (attr(temp,'system') == 'metric')
+  (attr(temp,'units') == 'celsius')
 
-  checkTrue(! freezing(temp))
-}
+  (! freezing(temp))
+})

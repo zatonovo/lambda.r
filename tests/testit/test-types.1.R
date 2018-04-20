@@ -1,5 +1,6 @@
 # vim: set filetype=R
 
+rm(list=ls())
 test.types_1 <- function() {
   A(x) %as% x
   B(x) %as% x
@@ -14,15 +15,16 @@ test.types_1 <- function() {
   seal(f)
 
   act.1 <- tryCatch(f(2,3), error=function(x) 'error')
-  cat("[test.types_1] act.1 =",act.1,"\n")
-  checkEquals(act.1, 'error')
+  #cat("[test.types_1] act.1 =",act.1,"\n")
+  (act.1 == 'error')
   a <- A(2)
   b <- B(3)
   act.2 <- f(a,b)
-  checkEquals(act.2, 5)
+  (act.2 == 5)
 }
 
 
+rm(list=ls())
 test.types_2.1 <- function() {
   Point(x,y) %as% list(x=x,y=y)
   Polar(r,theta) %as% list(r=r,theta=theta)
@@ -41,9 +43,11 @@ test.types_2.1 <- function() {
 
   point.1 <- Point(2,3)
   point.2 <- Point(5,7)
-  checkEquals(distance(point.1,point.2), 5)
+  (distance(point.1,point.2) == 5)
 }
 
+
+rm(list=ls())
 test.types_2.2 <- function() {
   Point(x,y) %as% list(x=x,y=y)
   Polar(r,theta) %as% list(r=r,theta=theta)
@@ -62,5 +66,5 @@ test.types_2.2 <- function() {
 
   point.3 <- Polar(3,pi/2)
   point.4 <- Polar(4,pi)
-  checkEquals(distance(point.3,point.4), 5)
+  (distance(point.3,point.4) == 5)
 }

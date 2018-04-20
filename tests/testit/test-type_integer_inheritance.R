@@ -1,4 +1,5 @@
-test.type_integer_1 <- function() {
+rm(list=ls())
+assert('type_integer_1', {
   fib(n) %::% numeric : numeric
   fib(0) %as% 1
   fib(1) %as% 1
@@ -6,10 +7,11 @@ test.type_integer_1 <- function() {
   seal(fib)
 
   act <- fib(3)
-  checkEquals(act, 3)
-}
+  (act == 3)
+})
 
-test.type_integer_2 <- function() {
+rm(list=ls())
+assert('type_integer_2', {
   fib(n) %::% numeric : numeric
   fib(0) %as% 1
   fib(1) %as% 1
@@ -17,10 +19,11 @@ test.type_integer_2 <- function() {
   seal(fib)
 
   act <- fib(as.integer(3))
-  checkEquals(act, 3)
-}
+  (act == 3)
+})
 
-test.type_integer_5 <- function() {
+rm(list=ls())
+assert('type_integer_5', {
   fib(n) %::% numeric : numeric
   fib(0) %as% as.integer(1)
   fib(1) %as% as.integer(1)
@@ -28,24 +31,26 @@ test.type_integer_5 <- function() {
   seal(fib)
 
   act <- fib(as.integer(3))
-  checkEquals(act, 3)
-}
+  (act == 3)
+})
 
-test.type_integer_3 <- function() {
+rm(list=ls())
+assert('type_integer_3', {
   hypotenuse(a,b) %::% numeric : numeric : numeric
   hypotenuse(a,b) %as% { (a^2 + b^2)^.5 }
   seal(hypotenuse)
 
   act <- hypotenuse(as.integer(3),4)
-  checkEquals(act,5)
-}
+  (act ==5)
+})
 
-test.type_integer_4 <- function() {
+rm(list=ls())
+assert('type_integer_4', {
   hypotenuse(a,b) %::% numeric : numeric : numeric
   hypotenuse(a,b) %as% { (a^2 + b^2)^.5 }
   seal(hypotenuse)
 
   act <- hypotenuse(as.integer(3), as.integer(4))
-  checkEquals(act,5)
-}
+  (act ==5)
+})
 

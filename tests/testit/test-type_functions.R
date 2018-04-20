@@ -1,32 +1,34 @@
-test.zero <- function() {
+rm(list=ls())
+
+assert('zero', {
   zero() %::% Function
   zero() %as% { function() 1 }
 
   act <- zero()
-  checkEquals(act(), 1)
-}
+  (act() == 1)
+})
 
-test.one_application <- function() {
+assert('one_application', {
   fn.0 <- function() 0
 
   one_application(x) %::% Function : numeric
   one_application(x) %as% { x() }
 
   act <- one_application(fn.0)
-  checkEquals(act, 0)
-}
+  (act == 0)
+})
 
-test.one_identity <- function() {
+assert('one_identity', {
   fn.0 <- function() 0
 
   one_identity(x) %::% Function : Function
   one_identity(x) %as% { x }
 
   act <- one_identity(fn.0)
-  checkEquals(act, fn.0)
-}
+  identical(act, fn.0)
+})
 
-test.two_application <- function() {
+assert('two_application', {
   fn.1 <- function(x) x
 
   two_application(x,y) %::% Function : numeric : numeric
@@ -36,13 +38,13 @@ test.two_application <- function() {
   two_application(y,x) %as% { x(y) }
 
   act <- two_application(fn.1,2)
-  checkEquals(act, 2)
+  (act == 2)
 
   act <- two_application(4,fn.1)
-  checkEquals(act, 4)
-}
+  (act == 4)
+})
 
-test.two_identity <- function() {
+assert('two_identity', {
   fn.0 <- function() 0
   fn.1 <- function(x) x
 
@@ -53,9 +55,9 @@ test.two_identity <- function() {
   two_identity(y,x) %as% { x }
 
   act <- two_identity(fn.0, 1)
-  checkEquals(act, fn.0)
+  identical(act, fn.0)
 
   act <- two_identity(2, fn.1)
-  checkEquals(act, fn.1)
-}
+  identical(act, fn.1)
+})
 

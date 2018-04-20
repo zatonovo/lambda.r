@@ -1,19 +1,21 @@
-test.function_args_1 <- function() {
+rm(list=ls())
+
+assert('function_args_1', {
   f() %as% 1
   seal(f)
   act <- f()
-  checkEquals(act,1)
-}
+  (act ==1)
+})
 
-test.function_args_2 <- function() {
+assert('function_args_2', {
   f() %::% numeric
   f() %as% 1
   seal(f)
   act <- f()
-  checkEquals(act,1)
-}
+  (act ==1)
+})
 
-test.function_args_3 <- function() {
+assert('function_args_3', {
   f() %::% numeric
   f() %as% 1
   f(a) %::% numeric : numeric
@@ -21,12 +23,12 @@ test.function_args_3 <- function() {
   seal(f)
 
   act <- f()
-  checkEquals(act,1)
+  (act ==1)
   act <- f(3)
-  checkEquals(act,3)
-}
+  (act ==3)
+})
 
-test.function_args_4 <- function() {
+assert('function_args_4', {
   f() %::% numeric
   f() %:=% 1
   f(a) %::% numeric : numeric
@@ -34,8 +36,8 @@ test.function_args_4 <- function() {
   seal(f)
 
   act <- f()
-  checkEquals(act,1)
+  (act ==1)
   act <- f(3)
-  checkEquals(act,3)
-}
+  (act ==3)
+})
 

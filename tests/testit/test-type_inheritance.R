@@ -1,6 +1,7 @@
 
 
-test.inheritance_one_arg <- function() {
+rm(list=ls())
+assert('inheritance_one_arg', {
   Base(x) %as% x
   A(x) %as% { Base(x) }
   B(x) %as% { A(x) }
@@ -22,14 +23,16 @@ test.inheritance_one_arg <- function() {
   b <- B(2)
   c <- E(3)
   act.a <- one.arg(a)
-  checkEquals(act.a, "a")
+  (act.a == "a")
   act.b <- one.arg(b)
-  checkEquals(act.b, "a")
+  (act.b == "a")
   act.c <- one.arg(c)
-  checkEquals(act.c, "base")
-}
+  (act.c == "base")
+})
 
-test.inheritance_two_arg <- function() {
+
+rm(list=ls())
+assert('inheritance_two_arg', {
   Base(x) %as% x
   A(x) %as% { Base(x) }
   B(x) %as% { A(x) }
@@ -51,15 +54,16 @@ test.inheritance_two_arg <- function() {
   b <- B(2)
   c <- E(3)
   act.a <- two.arg(a,b)
-  checkEquals(act.a, "a")
+  (act.a == "a")
   act.b <- two.arg(b,b)
-  checkEquals(act.b, "a")
+  (act.b == "a")
   act.c <- two.arg(c,b)
-  checkEquals(act.c, "base")
-}
+  (act.c == "base")
+})
 
 
-test.inheritance_with_type_variable <- function() {
+rm(list=ls())
+assert('inheritance_with_type_variable', {
   Base(x) %as% x
   A(x) %as% { Base(x) }
   B(x) %as% { A(x) }
@@ -81,15 +85,16 @@ test.inheritance_with_type_variable <- function() {
   b <- B(2)
   c <- E(3)
   act.a <- two.arg(a,b)
-  checkEquals(act.a, "a")
+  (act.a == "a")
   act.b <- two.arg(b,b)
-  checkEquals(act.b, "a")
+  (act.b == "a")
   act.c <- two.arg(c,b)
-  checkEquals(act.c, "a")
-}
+  (act.c == "a")
+})
 
 
-test.inheritance_with_ellipsis_1 <- function() {
+rm(list=ls())
+assert('inheritance_with_ellipsis_1', {
   Base(x, ...) %as% list(x=x, ...)
   A(x, z) %as% { Base(x, z=z) }
 
@@ -97,11 +102,13 @@ test.inheritance_with_ellipsis_1 <- function() {
   seal(A)
 
   a <- A(1, 2)
-  checkEquals(a$x, 1)
-  checkEquals(a$z, 2)
-}
+  (a$x == 1)
+  (a$z == 2)
+})
 
-test.inheritance_with_ellipsis_2 <- function() {
+
+rm(list=ls())
+assert('inheritance_with_ellipsis_2', {
   Base(x=1, ...) %as% list(x=x, ...)
   A(z) %as% { Base(z=z) }
 
@@ -109,6 +116,6 @@ test.inheritance_with_ellipsis_2 <- function() {
   seal(A)
 
   a <- A(2)
-  checkEquals(a$x, 1)
-  checkEquals(a$z, 2)
-}
+  (a$x == 1)
+  (a$z == 2)
+})

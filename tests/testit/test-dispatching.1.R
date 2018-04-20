@@ -1,4 +1,5 @@
-test.dispatching_1a <- function() {
+rm(list=ls())
+assert('dispatching_1a', {
   fib(0) %as% 1
   fib(1) %as% 1
   fib(n) %when% {
@@ -8,10 +9,11 @@ test.dispatching_1a <- function() {
   }
   seal(fib)
 
-  checkEquals(fib(5), 8)
-}
+  fib(5) == 8
+})
 
-test.dispatching_1b <- function() {
+rm(list=ls())
+assert('dispatching_1b', {
   fib(n) %::% numeric : numeric
   fib(0) %as% 1
   fib(1) %as% 1
@@ -19,13 +21,14 @@ test.dispatching_1b <- function() {
   seal(fib)
 
   act.1 <- fib(5)
-  checkEquals(act.1, 8)
-
   act.2 <- tryCatch(fib("a"), error=function(x) 'error')
-  checkEquals(act.2, 'error')
-}
 
-test.dispatching_1c <- function() {
+  (act.1 == 8)
+  (act.2 == 'error')
+})
+
+rm(list=ls())
+assert('dispatching_1c', {
   Integer(x) %as% x
 
   fib(n) %::% Integer : Integer
@@ -35,13 +38,14 @@ test.dispatching_1c <- function() {
   seal(Integer)
   seal(fib)
 
-  checkEquals(fib(Integer(5)), Integer(8))
-
   act <- tryCatch(fib(5), error=function(x) 'error')
-  checkEquals(act, 'error')
-}
 
-test.dispatching_1d <- function() {
+  (fib(Integer(5)) == Integer(8))
+  (act == 'error')
+})
+
+rm(list=ls())
+assert('dispatching_1d', {
   abs_max(a,b) %::% numeric : numeric : numeric
   abs_max(a,b) %when% {
     a != b
@@ -58,25 +62,27 @@ test.dispatching_1d <- function() {
   abs_max(a) %as% { max(abs(a)) }
   seal(abs_max)
 
-  checkEquals(abs_max(2,-3), 3)
-  checkEquals(abs_max("3","-4"), 4)
-
   a <- c(1,2,5,6,3,2,1,3)
-  checkEquals(abs_max(a), 6)
-}
+
+  (abs_max(2,-3) == 3)
+  (abs_max("3","-4") == 4)
+  (abs_max(a) == 6)
+})
 
 
-test.different_names <- function() {
+rm(list=ls())
+assert('different_names', {
   A(a) %as% { list(a=a) }
   A(b) %as% { list(b=b) }
   seal(A)
 
-  checkEquals(A(5)$a, 5)
-  checkEquals(A(a=5)$a, 5)
-  checkEquals(A(b=5)$b, 5)
-}
+  (A(5)$a == 5)
+  (A(a=5)$a == 5)
+  (A(b=5)$b == 5)
+})
 
-test.empty_function <- function() {
+rm(list=ls())
+assert('empty_function', {
   a() %as% {  }
   seal(a)
 
@@ -84,11 +90,12 @@ test.empty_function <- function() {
   seal(b)
 
   # Empty functions will fail
-  checkException(a(), NULL)
-  checkException(b(1), NULL)
-}
+  has_error(a())
+  has_error(b(1))
+})
 
-test.empty_type_constructor <- function() {
+rm(list=ls())
+assert('empty_type_constructor', {
   A() %as% {  }
   seal(A)
 
@@ -96,7 +103,7 @@ test.empty_type_constructor <- function() {
   seal(B)
 
   # Empty functions will fail
-  checkException(A(), NULL)
-  checkException(B(1), NULL)
-}
+  has_error(A())
+  has_error(B(1))
+})
 

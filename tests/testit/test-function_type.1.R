@@ -1,4 +1,6 @@
-test.function_type_1 <- function() {
+rm(list=ls())
+
+assert('function_type_1', {
   seq.gen(start) %::% a : Function
   seq.gen(start) %as%
   {
@@ -11,5 +13,5 @@ test.function_type_1 <- function() {
   seal(seq.gen)
 
   act <- seq.gen(1)
-  checkTrue('function' %in% class(act))
-}
+  ('function' %in% class(act))
+})

@@ -1,4 +1,4 @@
-test.auto_replace.types_2a <- function() {
+assert('auto_replace.types_2a', {
   fib(n) %::% numeric : numeric
   fib(0) %as% 1
   fib(1) %as% 2
@@ -12,13 +12,14 @@ test.auto_replace.types_2a <- function() {
   fib(1) %as% 1
   seal(fib)
 
-  act <- fib(3)
-  checkEquals(act, 3)
-  act <- fib("3")
-  checkEquals(act, 3)
-}
+  act.1 <- fib(3)
+  act.2 <- fib("3")
 
-test.auto_replace.types_2b <- function() {
+  (act.1 == 3)
+  (act.2 == 3)
+})
+
+assert('auto_replace.types_2b', {
   fib() %::% numeric
   fib() %as% 3
 
@@ -36,23 +37,24 @@ test.auto_replace.types_2b <- function() {
   fib() %as% 5
   seal(fib)
 
-  act <- fib(3)
-  checkEquals(act, 3)
-  act <- fib("3")
-  checkEquals(act, 3)
-  act <- fib()
-  checkEquals(act, 5)
-}
+  act.1 <- fib(3)
+  act.2 <- fib("3")
+  act.3 <- fib()
 
-test.auto_replace.types_2c <- function() {
+  (act.1 == 3)
+  (act.2 == 3)
+  (act.3 == 5)
+})
+
+assert('auto_replace.types_2c', {
   fib() %::% numeric
   fib() %as% 3
   fib() %as% 5
   seal(fib)
 
   act <- fib()
-  checkEquals(act, 5)
-}
+  act == 5
+})
 
 test.auto_replace.types_2d <- function() {
   fib() %::% numeric
@@ -64,9 +66,10 @@ test.auto_replace.types_2d <- function() {
   fib() %as% 5
   seal(fib)
 
-  act <- fib()
-  checkEquals(act, 5)
-  act <- fib(4)
-  checkEquals(act, 4)
+  act.1 <- fib()
+  act.2 <- fib(4)
+
+  (act.1 == 5)
+  (act.2 == 4)
 }
 

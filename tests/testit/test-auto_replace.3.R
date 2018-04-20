@@ -7,9 +7,10 @@ test.auto_replace_3 <- function() {
   seal(fib)
 
   # These are failing
-  act <- fib(3)
-  checkEquals(act, 3)
-  act <- fib(2)
-  checkEquals(act, 2)
+  act.1 <- fib(3)
+  act.2 <- fib(2)
+
+  (act.1 == 3)
+  (act.2 == 2)
 }
 

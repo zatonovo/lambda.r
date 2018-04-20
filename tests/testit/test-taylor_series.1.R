@@ -1,3 +1,5 @@
+rm(list=ls())
+
 compare <- function(a,b, xs) {
   plot(xs, a(xs), type='l')
   lines(xs, b(xs), type='l', col='blue')
@@ -18,10 +20,10 @@ compare <- function(a,b, xs) {
 # compare(p,f, xs)
 # 
 # f(x) ~ f(a) + f'(a) * (x - a) + f''(a) / 2! * (x - a)^2 + ...
-test.taylor_series_1 <- function() {
-  seal(fac)
+assert('taylor_series_1', {
   fac(1) %as% 1
   fac(n) %when% { n > 0 } %as% { n * fac(n - 1) }
+  seal(fac)
 
   # TODO: Implement this properly for k > 2
   d(f, 1, h=10^-9) %as% function(x) { (f(x + h) - f(x - h)) / (2*h) }
@@ -37,5 +39,5 @@ test.taylor_series_1 <- function() {
 
   f <- taylor(sin, pi)
   v <- f(3.1)
-  checkEquals(v, sin(3.1), tolerance=0.01)
-}
+  all.equal(v, sin(3.1), tolerance=0.01)
+})

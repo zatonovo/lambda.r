@@ -1,3 +1,5 @@
+rm(list=ls())
+
 WishartModel(n,m,Q,sd) %as% {
   x <- list()
   x@n <- n
@@ -16,12 +18,12 @@ WishartMatrix(x, model) %as% {
 }
 
 
-test.parse_transforms_3 <- function() {
+assert('parse_transforms_3', {
   model <- WishartModel(10,20,2,1)
   mat <- WishartMatrix(rnorm(10), model)
 
-  checkEquals(attr(mat,'n'), 10)
-  checkEquals(attr(mat,'m'), 20)
-  checkEquals(attr(mat,'Q'), 2)
-  checkEquals(attr(mat,'sd'),1)
-}
+  (attr(mat,'n') == 10)
+  (attr(mat,'m') == 20)
+  (attr(mat,'Q') == 2)
+  (attr(mat,'sd') == 1)
+})
