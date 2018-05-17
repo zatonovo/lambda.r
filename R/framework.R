@@ -10,7 +10,7 @@ is.bound <- function(name) {
 
 # f(a,b) %::% A : B : C
 '%::%' <- function(signature, types) {
-  os <- options(keep.source=TRUE)
+  os <- options(keep.source=TRUE, keep.parse.data=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   t.expr <- paste(deparse(substitute(types)), collapse="\n")
   text <- paste(s.expr,t.expr, sep=" %::% ")
@@ -36,7 +36,7 @@ is.bound <- function(name) {
   tree$signature <- paste(s.expr,"%::%",t.expr, sep=' ')
 
   add_type(name, tree)
-  options(keep.source=os$keep.source)
+  options(keep.source=os$keep.source, keep.parse.data=os$keep.parse.data)
   invisible()
 }
 
@@ -45,7 +45,7 @@ is.bound <- function(name) {
 # f(a,b) %when% { a < 0 } %as% { abs(a) + b }
 # f(a,b) %as% { a + b }
 '%as%' <- function(signature, body) {
-  os <- options(keep.source=TRUE)
+  os <- options(keep.source=TRUE, keep.parse.data=TRUE)
   s.expr <- paste(deparse(substitute(signature)), collapse="\n")
   b.expr <- paste(deparse(substitute(body)), collapse="\n")
   text <- paste(s.expr,b.expr, sep=" %as% ")
@@ -88,7 +88,7 @@ is.bound <- function(name) {
   tree$fill.defaults <- clean_defaults(tree)
 
   add_variant(name, tree, where)
-  options(keep.source=os$keep.source)
+  options(keep.source=os$keep.source, keep.parse.data=TRUE)
   invisible()
 }
 
