@@ -1,8 +1,8 @@
 Package: lambda.r
 Type: Package
 Title: Modeling Data with Functional Programming
-Version: 1.2.2
-Date: 2018-04-20
+Version: 1.2.3
+Date: 2018-05-17
 Depends: R (>= 3.0.0)
 Imports: formatR
 Suggests: testit
