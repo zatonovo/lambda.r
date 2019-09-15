@@ -477,6 +477,11 @@ function(x) { x }
 Monads
 ------
 
+If you want to play around with monads in R, `lambda.r` has your back.
+Here are some examples. Note that `lambda.tools` implements some common
+monadic operators.
+
+```
 Maybe(a) %:=% a
 Just(a) %:=% Maybe(a)
 Nothing() %:=% Maybe(NA)
@@ -495,17 +500,21 @@ m %>>=% g %as% m
 
 m %>>=% g %::% Just : Function : Maybe
 m %>>=% g %as% g(m)
+```
 
 
 Composition
+```
 f %.% g %:=% function(...) f(g(...))
 
 > unsafelogsqrt <- log %.% sqrt
 > unsafelogsqrt(100)
  [1] 2.302585
+```
 
 
 Monadic composition
+```
 f %>=>% g %:=% { function(x) f(x) %>>=% g }
 f %<=<% g %:=% { function(x) g(x) %>>=% f }
 
@@ -518,6 +527,7 @@ safesqrt(x) %when% { x <= 0 } %as% Nothing()
 safesqrt(x) %:=% Just(sqrt(x))
 
 safelogsqrt <- safelog %<=<% safesqrt
+```
 
 
 

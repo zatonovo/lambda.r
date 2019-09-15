@@ -455,7 +455,7 @@ iterator <- function(tree)
     if (rewind) idx <<- idx - 1
     else idx <<- idx + 1
     if (idx < cap) tree[idx,]
-    else NA
+    else NULL
   }
 }
 
@@ -590,13 +590,13 @@ strip_quotes <- function(x) sub('^[\'"]([^\'"]+)[\'"]$', '\\1', x)
 parse_guard <- function(it)
 {
   guards <- NULL
-  while (!is.na(line <- it()) && line$token != "SPECIAL") next
+  while (!is.null(line <- it()) && line$token != "SPECIAL") next
   if (line$text == '%when%')
   {
     line <- it()
     if (line$token != "'{'")
       stop("Guard missing opening block")
-    while (!is.na(line <- it()) && line$token != "'}'")
+    while (!is.null(line <- it()) && line$token != "'}'")
     {
       if (line$token %in% c("'{'"))
         stop("Invalid symbol '",line$text,"'in function definition")
@@ -604,7 +604,7 @@ parse_guard <- function(it)
       if (line$token %in% c('expr')) next
       guards <- rbind(guards, line)
     }
-    #while (!is.na(line <- it()) && line$token != "SPECIAL") next
+    #while (!is.null(line <- it()) && line$token != "SPECIAL") next
   }
   else
     it(rewind=TRUE)
@@ -704,11 +704,11 @@ parse_body <- function(it)
 {
   body <- NULL
   # Skip until we get to the 
-  while (!is.na(line <- it()) && line$token != "SPECIAL") next
+  while (!is.null(line <- it()) && line$token != "SPECIAL") next
   if (line$text == '%as%')
   {
     needs.wrapping <- FALSE
-    while (!is.na(line <- it()) && TRUE)
+    while (!is.null(line <- it()) && TRUE)
     {
       if (line$token %in% c('expr')) next
       body <- rbind(body, line)
@@ -748,10 +748,10 @@ body_fn <- function(raw.args, tree, where)
 parse_types <- function(it, args, sig)
 {
   types <- NULL
-  while (!is.na(line <- it()) && line$token != "SPECIAL") next
+  while (!is.null(line <- it()) && line$token != "SPECIAL") next
   if (line$text == '%::%')
   {
-    while (!is.na(line <- it()) && TRUE)
+    while (!is.null(line <- it()) && TRUE)
     {
       if (line$token %in% c("'{'", "'}'", "'('", "')'"))
         stop("Invalid symbol '",line$text,"'in definition of ",sig)
