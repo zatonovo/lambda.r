@@ -467,7 +467,7 @@ get_name <- function(it) {
 }
 
 fast_forward <- function(it, what) {
-  while (!is.na(line <- it()) && ! line$text %in% what) { }
+  while (!is.null(line <- it()) && ! line$text %in% what) { }
   it(rewind=TRUE)
 }
 
@@ -498,7 +498,7 @@ parse_fun <- function(it, raw=NULL) {
   node <- 'argument'
   token <- pattern <- default <- NULL
   in.default <- FALSE
-  while (!is.na(line <- it()) && line$token != "SPECIAL")
+  while (!is.null(line <- it()) && line$token != "SPECIAL")
   {
     line.token <- line$token
     if (line.token == 'expr') next
@@ -1087,7 +1087,7 @@ parse_eval <- function(it, raw=NULL)
   arg.idx <- 1
   node <- 'argument'
   token <- NULL
-  while (!is.na(line <- it()) && TRUE)
+  while (!is.null(line <- it()) && TRUE)
   {
     line.token <- line$token
     if (line.token == 'expr') next
