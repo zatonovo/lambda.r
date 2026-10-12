@@ -68,9 +68,10 @@ Functions can be defined using infix notation as well.
 For the function \code{g} above, it can be defined as an infix operator
 using
 
-x \%g\% y \%:=\% {
+\preformatted{ x \%g\% y \%:=\% {
   z <- x + y
   sqrt(z)
+}
 }
 }
 

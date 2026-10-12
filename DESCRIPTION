@@ -7,6 +7,10 @@ Depends: R (>= 3.0.0)
 Imports: formatR
 Suggests: testit
 Author: Brian Lee Yung Rowe
+Authors@R: person(given = c("Brian", "Lee", "Yung"),
+                      family = "Rowe",
+                      role = c("aut", "cre"),
+                      email = "r@zatonovo.com")
 Maintainer: Brian Lee Yung Rowe <r@zatonovo.com>
 Description: A language extension to efficiently write functional programs in R. Syntax extensions include multi-part function definitions, pattern matching, guard statements, built-in (optional) type safety.
 License: LGPL-3
