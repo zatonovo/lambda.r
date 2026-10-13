@@ -6,7 +6,6 @@ Date: 2026-10-12
 Depends: R (>= 3.0.0)
 Imports: formatR
 Suggests: testit
-Author: Brian Lee Yung Rowe
 Authors@R: person(given = c("Brian", "Lee", "Yung"),
                       family = "Rowe",
                       role = c("aut", "cre"),
